@@ -9,6 +9,7 @@
 
 
 #include "SbYUV.hpp"
+#include <cstring>
 
 namespace Sb::Video {
 
