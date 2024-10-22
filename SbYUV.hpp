@@ -11,6 +11,8 @@
 #include <cstddef>
 #include <istream>
 #include <ostream>
+#include <cstdint>
+#include <cstring>
 
 namespace Sb::Video {
 
