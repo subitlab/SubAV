@@ -1,11 +1,20 @@
-SubIT Audio and Video format (SubAV)
+SubIT Audio and Video (SubAV) SDK
 
-In game industry and its relatives, an awesome CG can often catches players' eyes. However, even though there are a variety of famous container formats we can often achieve on our devices such as avi, mp4, mov for us to use, they have some problems we can not overcome. The first one is they are not open-source (yes mp4 is not); and the second one is they are not suitable for game industry and its relatives (videos used in these areas requires high performance).There are indeed some open-source formats like ogg-video and matroska(mkv) but ogg is a little bit old (the last official release was at 2005) and matroska's decoding can be very complicated (I don't actually have interests to its documentation).In the past, most big companies use "Bink-video" as there CG format, Bink is a fast, small and high quality format which is just designed for games, but, bink is not open-source and could be expensive for commercial usage.
+In game industry and its relatives we often want a av format to store our CGs in high-speed, high-quality, low-size and also controlable. 
+However, formats such as MP4, AVI, MOV are closed-source and OGG, MKV are not suit for games. 'Bink' is a good choice, but as I have mentioned,
+it's closed-source and could be expensive. 
 
-So, after crticizing all formats above, I decided to design our very own audio-video format which is "SubAV", this format views Bink as its goal but faster and simpler. The most importantly, I don't like technique privacy so this format is also open-sourced under the "MIT-License".
+So I managed to make this 'SubAV-SDK' which contains a standalone image format (sbsi) that can be used for textures inside our games, a binary interchange
+yuv (sbrfs) as a replacement of YUV4MPEG, a small audio format (sbsw -- still in develop) and a combination of them all (sbav -- still in develop). All these
+stuff can be found inside "AVCore" folder.
 
-This repositroy now contains a very simple interchange format -- SbYUV and its SbYUVTool to do convertions. For simplicity, just include "SbYUV.hpp" and "SbYUV.cpp" into your own projects, then you can start quickly following the comments or samples.
+There is also a tool that can easily generate or playback these formats, it's called 'sbavtool' and sources are included in "AVTool" folder. Sources inside "AVTool"
+can also be samples to show you how to intergrate this SDK into your own game project.
 
-This project is still in-developed, so more and more features will be added in the future, I hope it can make some difference in (at least our own in SubIT) game development.
+You don't need any extra dependencies to build "sbavcore" which is the core part of the SDK.
+However, you need "VulkanSDK" and "FFmpeg" installed on your computer and "glfw" cloned into the project folder to build "sbavtool".
 
-HenryDu 2024.10.19
+If you need to intergrate this SDK into your own project, just copy sources and "NOT USE CMAKE", which I think could be very heavy and
+I also didn't managed to adapt it.
+
+HenryDu 2024.11.9
