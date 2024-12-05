@@ -15,7 +15,7 @@
 
 #include <iostream>
 
-#include "Huffman.hpp"
+#include "MaxFOG.hpp"
 #include "JPEG.hpp"
 #include "DCT.hpp"
 
@@ -138,7 +138,7 @@ namespace SubIT {
         std::memset(plane, 0, pfSize);
         
         // Initialize it by normalized plane value.
-        SbJPEG::copy_block(reinterpret_cast<uint8_t*>(PlaneAt(p)), pWidth, pHeight, pWidth, plane, pfWidth, [](auto v) { return v; });
+        SbJPEG::copy_block(reinterpret_cast<int8_t*>(PlaneAt(p)), pWidth, pHeight, pWidth, plane, pfWidth, [](auto v) { return v; });
 
         // Iterate through image and use 8x8 block to do DCT and Quantization.
         for (size_t y = 0; y < pHeight; y += 8) {
@@ -171,7 +171,7 @@ namespace SubIT {
         image->Allocate();
 
         // Write data to memory.
-        SbCodecHuffman::DecodeBits(image->data, SbCodecHuffman::GetEncodedBits(in), in);
+        SbCodecMaxFOG::DecodeBits(image->data, SbCodecMaxFOG::GetEncodedBits(in), in);
 
         image->LossyExpandPlane(SbStandaloneImage::Luma);
         image->LossyExpandPlane(SbStandaloneImage::ChromaBlue);
@@ -189,7 +189,7 @@ namespace SubIT {
         image->LossyShrinkPlane(SbStandaloneImage::ChromaRed);
 
         // Next is huffman part (all in one).
-        SbCodecHuffman::EncodeBytes(image->data, image->data + image->TotalSize(), out);
+        SbCodecMaxFOG::EncodeBytes(image->data, image->data + image->TotalSize(), out);
     }
 
 }

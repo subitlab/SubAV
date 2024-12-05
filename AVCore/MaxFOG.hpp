@@ -1,6 +1,6 @@
 ///
-/// \file      Huffman.hpp
-/// \brief     Huffman coding implementation.
+/// \file      MaxFOG.hpp
+/// \brief     MaxFOG coding implementation.
 /// \details   ~
 /// \author    HenryDu
 /// \date      9.11.2024
@@ -16,7 +16,7 @@ namespace SubIT {
     //======================
     // Huffman Coding
     //======================
-    class SbCodecHuffman {
+    class SbCodecMaxFOG {
     public:
         static uint8_t*  MakeTree    (uint8_t* treeBeg, uint8_t* beg, uint8_t* end);
         static size_t    EncodeBytes(uint8_t* beg,     uint8_t* end, std::ostream* stream);

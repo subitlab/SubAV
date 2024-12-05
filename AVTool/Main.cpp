@@ -57,8 +57,14 @@ Following commands are available now (You should at least have three arguments):
             
             // Create a standalone image.
             std::ofstream output(std::string(tmp) + ".sbsi"s, std::ios::binary);
+
+            auto start = std::chrono::high_resolution_clock::now();
             SbSIFactory factory{ &image };
             factory(&output);
+            auto stop = std::chrono::high_resolution_clock::now();
+
+            std::cout << "Totoal compression time used: ";
+            std::cout << std::chrono::duration<float>( stop - start) << std::endl;
 
             // Clear all temporary files.
             output.close();
@@ -106,7 +112,23 @@ Following commands are available now (You should at least have three arguments):
         }
         
         void ViewStandalone(std::string_view filename, std::string_view tmp) const {
-            std::cout << "Sorry, but this is still work in progress!\n";
+            SubIT::SbStandaloneImage image;
+            SubIT::SbSIFactory factory{ &image };
+    
+            std::ifstream insbsi(filename.data(), std::ios::binary);
+            std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
+            factory(&insbsi);
+            auto stop = std::chrono::high_resolution_clock::now();
+    
+            std::cout << "Totoal uncompression time: ";
+            std::cout << std::chrono::duration<float>(stop - start) << std::endl;
+
+            auto tmpName = std::format("{:s}.yuv", tmp);
+            std::ofstream ofs(tmpName, std::ios::binary);
+            ofs.write(reinterpret_cast<const char*>(image.data), image.TotalSize());
+            SbFFMpegCommander::StandaloneView(&image, tmpName);
+            ofs.close();
+            std::filesystem::remove(tmpName);
         }
 
         void ViewFrameSequence(std::string_view filename, std::string_view tmp) const {
@@ -139,6 +161,7 @@ Following commands are available now (You should at least have three arguments):
 }
 
 int main(int argc, char* argv[]) {
+    // To generate an image, uncomment these code and use console argument.
     SubIT::SbAVTool avToolApplication(argc, argv);
     avToolApplication();
     return 0;

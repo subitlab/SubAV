@@ -23,6 +23,7 @@ namespace SubIT {
         static uint32_t YUVParseDesc(std::string_view tmpName, size_t* width, size_t* height, uint16_t* num, uint16_t* den);
         static uint32_t YUVCreateStream(std::string_view filename, std::string_view out = "temp");
         static uint32_t StandaloneFillDescAndAllocate(SbStandaloneImage* image, std::string_view tmpName);
+        static uint32_t StandaloneView(SbStandaloneImage* image, std::string_view tmpName);
     };
 
 }

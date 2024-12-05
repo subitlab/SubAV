@@ -1,6 +1,6 @@
 ///
-/// \file      Huffman.cpp
-/// \brief     A Huffman codec implementation.
+/// \file      MaxFOG.cpp
+/// \brief     A MaxFOG codec implementation.
 /// \details   ~
 /// \author    HenryDu
 /// \date      9.11.2024
@@ -11,13 +11,13 @@
 #include <istream>
 
 #include "BitStream.hpp"
-#include "Huffman.hpp"
+#include "MaxFOG.hpp"
 
 #include <iostream>
 
 namespace SubIT {
 
-    uint8_t* SbCodecHuffman::MakeTree(uint8_t* treeBeg, uint8_t* beg, uint8_t* end) {
+    uint8_t* SbCodecMaxFOG::MakeTree(uint8_t* treeBeg, uint8_t* beg, uint8_t* end) {
         size_t  countMap[256] = {};
         uint8_t *treeEnd = treeBeg;
         for (; beg != end; ++beg) {
@@ -33,7 +33,7 @@ namespace SubIT {
         return treeEnd;
     }
 
-    size_t SbCodecHuffman::EncodeBytes(uint8_t* beg, uint8_t* end, std::ostream* stream) {
+    size_t SbCodecMaxFOG::EncodeBytes(uint8_t* beg, uint8_t* end, std::ostream* stream) {
         // For future relocate.
         const std::streampos streambeg = stream->tellp();
 
@@ -108,13 +108,13 @@ namespace SubIT {
         return bitsEncoded;
     }
 
-    size_t SbCodecHuffman::GetEncodedBits(std::istream* stream) {
+    size_t SbCodecMaxFOG::GetEncodedBits(std::istream* stream) {
         size_t bits = 0;
         stream->read(reinterpret_cast<char*>(&bits), sizeof(size_t));
         return bits;
     }
 
-    size_t SbCodecHuffman::DecodeBits(uint8_t* beg, size_t bits, std::istream* stream) {
+    size_t SbCodecMaxFOG::DecodeBits(uint8_t* beg, size_t bits, std::istream* stream) {
         // Get tree and its range.
         uint8_t  treeBeg[256] = {};
         uint8_t  nodeCount = 0;
