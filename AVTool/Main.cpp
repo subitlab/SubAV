@@ -126,8 +126,8 @@ Following commands are available now (You should at least have three arguments):
             auto tmpName = std::format("{:s}.yuv", tmp);
             std::ofstream ofs(tmpName, std::ios::binary);
             ofs.write(reinterpret_cast<const char*>(image.data), image.TotalSize());
-            SbFFMpegCommander::StandaloneView(&image, tmpName);
             ofs.close();
+            SbFFMpegCommander::StandaloneView(&image, tmpName);
             std::filesystem::remove(tmpName);
         }
 

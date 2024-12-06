@@ -40,22 +40,25 @@ namespace SubIT {
         allocator.deallocate(data, TotalSize());
     }
 
+    size_t SbStandaloneImage::PaddedValue(size_t n, PlaneType p) const {
+        return n + ((p + 1) >> 1) * (n & 1);
+    }
+
     size_t SbStandaloneImage::PlaneSize(PlaneType p) const {
-        return width * height >> (((p + 1) >> 1) << 1);
+        return PaddedValue(width, p) * PaddedValue(height, p) >> (((p + 1) >> 1) << 1);
     }
 
     uint8_t* SbStandaloneImage::PlaneAt(PlaneType p) const {
         const size_t pp1 = static_cast<size_t>(p) + 1;
-        return data + ((pp1 >> 1) * PlaneSize(Luma) + ((pp1 - 1) >> 1) * PlaneSize(ChromaBlue));
+        return data + ((pp1 >> 1) * PlaneSize(Luma) + (p >> 1) * PlaneSize(ChromaBlue));
     }
 
     size_t SbStandaloneImage::PlaneDelta(PlaneType p, size_t off) const {
-        const size_t data = reinterpret_cast<const size_t*>(this)[off];
-        return data >> ((p + 1) >> 1);
+        return PaddedValue(reinterpret_cast<const size_t*>(this)[off], p) >> ((p + 1) >> 1);
     }
 
     size_t SbStandaloneImage::TotalSize() const {
-        return (width * height * 3) >> 1;
+        return width * height + ((width + (width & 1)) * (height + (height & 1)) >> 1);
     }
 
     void SbStandaloneImage::Allocate() {

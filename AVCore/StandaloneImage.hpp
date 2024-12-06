@@ -39,6 +39,7 @@ namespace SubIT {
         SbStandaloneImage& operator=(SbStandaloneImage&&)      = default;
         ~SbStandaloneImage();
 
+        size_t     PaddedValue(size_t n, PlaneType p)   const;
         // For copy purpose.
         size_t     PlaneSize(PlaneType p)              const;
         // Locate data pointer to Y plane / Cb plane / Cr plane.

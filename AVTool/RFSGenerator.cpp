@@ -56,6 +56,6 @@ namespace SubIT {
     }
 
     uint32_t SbFFMpegCommander::StandaloneView(SbStandaloneImage* image, std::string_view tmpName) {
-        std::system(std::format("ffplay -f rawvideo -pixel_format yuv420p -vf vflip -video_size {:d}x{:d} {:s}", image->width, image->height, tmpName).c_str());
+        return std::system(std::format("ffplay -f rawvideo -pixel_format yuv420p -vf vflip -video_size {:d}x{:d} {:s}", image->width, image->height, tmpName).c_str());
     }
 }
