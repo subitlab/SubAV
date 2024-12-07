@@ -5,11 +5,12 @@
 /// \copyright © Henry Du @ SubIT 2024. All right reserved.
 /// 
 
-#include <dinput.h>
 #include <string>
 #include <fstream>
 #include <iostream>
 #include <filesystem>
+#include <algorithm>
+#include <format>
 
 #include "../AVCore/StandaloneImage.hpp"
 #include "../AVCore/FrameSequence.hpp"
@@ -64,7 +65,7 @@ Following commands are available now (You should at least have three arguments):
             auto stop = std::chrono::high_resolution_clock::now();
 
             std::cout << "Totoal compression time used: ";
-            std::cout << std::chrono::duration<float>( stop - start) << std::endl;
+            std::cout << std::chrono::duration<float>( stop - start).count() << std::endl;
 
             // Clear all temporary files.
             output.close();
@@ -121,7 +122,7 @@ Following commands are available now (You should at least have three arguments):
             auto stop = std::chrono::high_resolution_clock::now();
     
             std::cout << "Totoal uncompression time: ";
-            std::cout << std::chrono::duration<float>(stop - start) << std::endl;
+            std::cout << std::chrono::duration<float>(stop - start).count() << std::endl;
 
             auto tmpName = std::format("{:s}.yuv", tmp);
             std::ofstream ofs(tmpName, std::ios::binary);
