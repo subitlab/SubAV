@@ -92,44 +92,6 @@ namespace SubIT {
                 ++bitsEncoded;
             }
         }
-/* old Golomb coding
-
-        // Start iterate through tree and encode.
-        for (; beg != end; ++beg) {
-            // Tree depth is a function of nodeCount;
-            const size_t treeDepth = (nodeCount + 1) >> 1;
-            const uint8_t branchSide = acMap[*beg] & 1;
-
-            // Normal case huffman tree
-            if (treeDepth > 1) {
-                const size_t depthLimit = treeDepth - 2;
-                const size_t depthAt = acMap[*beg] >> 1;
-                const size_t determinant = nodeCount - acMap[*beg]; // Compare determinant < 3.
-
-                // 1 count.
-                size_t depth = 0;
-                for (; depth != depthAt && depth != depthLimit; ++depth) {
-                    bitStream.BitPut(1);
-                }
-
-                // Not satisfy determinant, which means it must read left branch.
-                if (depth == depthAt) {
-                    bitStream.BitPut(0);
-                }
-                else {
-                    bitStream.BitPut(determinant < 3);
-                }
-                ++depth;
-                bitStream.BitPut(branchSide);
-                bitsEncoded += (depth + 1);
-            }
-            // Least case huffman tree.
-            else {
-                bitStream.BitPut(branchSide);
-                bitsEncoded++;
-            }
-        }
-*/
         // Push remaining data.
         bitStream.Push();
         // Back to start position to write how many bits encoded.
