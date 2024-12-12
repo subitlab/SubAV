@@ -60,9 +60,39 @@ namespace SubIT {
         // Create output bitstream
         SbBitBuffer  bitBuffer(65536); // This constant can be changed to whatever you like but this is for good performance.
         SbOBitStream bitStream(&bitBuffer, stream->rdbuf());
-
         // Write all bytes into bit stream according to the map.
         size_t     bitsEncoded = 0;
+        for(; beg != end; ++beg) {
+            if(*beg == '\0') { // 0 is treated differently because of the nature of DCT'ed data, especially after quantization.
+                bitStream.BitPut(0);
+                ++bitsEncoded;
+                continue;
+            }
+            bitStream.BitPut(1); // Golomb coding
+            ++bitsEncoded;
+            auto treePos = treeBeg+1;
+            for(; treeEnd - treePos > 2; treePos += 2) {
+                if(*treePos == *beg) { // No.0 in current chunk
+                    bitStream.BitPut(0);
+                    bitStream.BitPut(0);
+                    bitsEncoded += 2;
+                    break;
+                }
+                if(*(treePos+1) == *beg) { // No.1 in current chunk
+                    bitStream.BitPut(0);
+                    bitStream.BitPut(1);
+                    bitsEncoded += 2;
+                    break;
+                }
+                bitStream.BitPut(1); // Otherwise, go to the next chunk
+                ++bitsEncoded;
+            }
+            if(treePos == treeEnd - 2) { // The last mark is only needed if there are two values in the last chunk
+                bitStream.BitPut(!(*treePos == *beg));
+                ++bitsEncoded;
+            }
+        }
+/* old Golomb coding
 
         // Start iterate through tree and encode.
         for (; beg != end; ++beg) {
@@ -99,8 +129,8 @@ namespace SubIT {
                 bitsEncoded++;
             }
         }
-
-        // Push remain data.
+*/
+        // Push remaining data.
         bitStream.Push();
         // Back to start position to write how many bits encoded.
         stream->seekp(streambeg);

@@ -14,7 +14,7 @@
 
 namespace SubIT {
     //======================
-    // Huffman Coding
+    // MaxFOG Coding
     //======================
     class SbCodecMaxFOG {
     public:
