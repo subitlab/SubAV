@@ -21,6 +21,7 @@ namespace SubIT {
         size_t  countMap[256] = {};
         uint8_t *treeEnd = treeBeg;
         for (; beg != end; ++beg) {
+            if(*beg == 0) continue;
             if (countMap[*beg] == 0) {
                 *treeEnd++ = *beg;
             }
@@ -70,7 +71,7 @@ namespace SubIT {
             }
             bitStream.BitPut(1); // Golomb coding
             ++bitsEncoded;
-            auto treePos = treeBeg+1;
+            auto treePos = treeBeg;
             for(; treeEnd - treePos > 2; treePos += 2) {
                 if(*treePos == *beg) { // No.0 in current chunk
                     bitStream.BitPut(0);
