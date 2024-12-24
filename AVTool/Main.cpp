@@ -28,8 +28,8 @@ namespace SubIT {
 
         void PrintHelpMessage() const {
             const char* message = R"(
-Copyright © Henry Du @ SubIT 2024. All right reserved.
-Part of SubAV SDK, a tool for sbsi, sbws, sbav generation.
+Copyright © SubIT 2024. All right reserved.
+Part of SubAV SDK, a tool for sbsi, sbws, sbav processing.
 Following commands are available now (You should at least have three arguments):
 
 -sig : Follows a image (JPEG, PNG, etc.)  and generate a sbsi file.
@@ -64,7 +64,7 @@ Following commands are available now (You should at least have three arguments):
             factory(&output);
             auto stop = std::chrono::high_resolution_clock::now();
 
-            std::cout << "Totoal compression time used: ";
+            std::cout << "Total compression time: ";
             std::cout << std::chrono::duration<float>( stop - start).count() << std::endl;
 
             // Clear all temporary files.
@@ -109,7 +109,7 @@ Following commands are available now (You should at least have three arguments):
         }
 
         static void GenerateWaveSequence(std::string_view filename, std::string_view tmp) {
-            std::cout << "Sorry, but this is still work in progress!\n";
+            std::cout << "Sorry, but this is still working in progress!\n";
         }
         
         void ViewStandalone(std::string_view filename, std::string_view tmp) const {
@@ -121,7 +121,7 @@ Following commands are available now (You should at least have three arguments):
             factory(&insbsi);
             auto stop = std::chrono::high_resolution_clock::now();
     
-            std::cout << "Totoal uncompression time: ";
+            std::cout << "Total uncompression time: ";
             std::cout << std::chrono::duration<float>(stop - start).count() << std::endl;
 
             auto tmpName = std::format("{:s}.yuv", tmp);
@@ -133,7 +133,7 @@ Following commands are available now (You should at least have three arguments):
         }
 
         void ViewFrameSequence(std::string_view filename, std::string_view tmp) const {
-            std::cout << "Sorry, but this is still work in progress!\n";
+            std::cout << "Sorry, but this is still working in progress!\n";
         }
 
         // Execute when command case is equal to 3.
