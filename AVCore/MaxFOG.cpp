@@ -233,9 +233,11 @@ namespace SubIT {
     }
 
     size_t SbCodecMaxFOG::DecodeBits(uint8_t* beg, size_t bits, std::istream* stream) {
+
         // Get tree and its range.
         uint8_t  treeBeg[256] = {};
         uint8_t  nodeCount = 0;
+        auto start = std::chrono::high_resolution_clock::now();
         stream->read(reinterpret_cast<char*>(&nodeCount), sizeof(uint8_t));
         stream->read(reinterpret_cast<char*>(treeBeg), static_cast<std::streamsize>(nodeCount));
         ikp::byteDecoder bytDec(treeBeg, nodeCount);
@@ -249,6 +251,8 @@ namespace SubIT {
 //            std::cerr << (int)bitPos << '\n';
             *beg = bytDec(&curByte, &bitPos);
         }
+        auto end = std::chrono::high_resolution_clock::now();
+        std::cerr << "File reading and MaxFOG decoding time: " << std::chrono::duration<float>(end - start).count() << '\n';
         delete[] buf;
         return bytesDecoded;
     }

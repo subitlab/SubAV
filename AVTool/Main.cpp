@@ -33,10 +33,10 @@ Part of SubAV SDK, a tool for sbsi, sbws, sbav processing.
 Following commands are available now (You should provide at least three arguments):
 
 -sig : Follows a image (JPEG, PNG, etc.)  and generate a sbsi file.
--fsg : Follows a video (MP4, MOV etc. This ignore audio track inside) and generate a sbfs file.
--wsg : Follows a audio (MP3, OGG etc.) and generate a sbws file.
+-fsg : Follows a video (MP4, MOV etc. This ignore audio track inside) and generate a sbfs file. (WIP)
+-wsg : Follows a audio (MP3, OGG etc.) and generate a sbws file. (WIP)
 -siv : Follows a sbsi image -- view it.
--fsv : Follows a sbfs video -- view it.
+-fsv : Follows a sbfs video -- view it. (WIP)
 
 )";
             std::cout << message;
