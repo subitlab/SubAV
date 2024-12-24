@@ -30,7 +30,7 @@ namespace SubIT {
             const char* message = R"(
 Copyright © SubIT 2024. All right reserved.
 Part of SubAV SDK, a tool for sbsi, sbws, sbav processing.
-Following commands are available now (You should at least have three arguments):
+Following commands are available now (You should provide at least three arguments):
 
 -sig : Follows a image (JPEG, PNG, etc.)  and generate a sbsi file.
 -fsg : Follows a video (MP4, MOV etc. This ignore audio track inside) and generate a sbfs file.
