@@ -165,7 +165,7 @@ namespace SubIT {
         char header[8] = {};
         in->read(header, 8);
         if (std::memcmp(header, "SB-AV-SI", 8) != 0) {
-            throw std::runtime_error("Error, not a valid SBSI format.");
+            throw std::runtime_error("Error: invalid SBSI file.");
         }
         in->read(reinterpret_cast<char*>(&image->width), 8);
         in->read(reinterpret_cast<char*>(&image->height), 8);

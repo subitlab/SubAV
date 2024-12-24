@@ -9,6 +9,7 @@
 #include <bit>
 #include <streambuf>
 #include "BitStream.hpp"
+#include <cstring>
 
 namespace SubIT {
     SbBitBuffer::SbBitBuffer(std::size_t bitSize) : bitBuffer(bitSize >> 3, 0), bitPosition(0) {}
@@ -34,7 +35,7 @@ namespace SubIT {
 
     void SbBitBuffer::Flush() {
         bitPosition = 0;
-        std::memset(bitBuffer.data(), 0, MaxBit() >> 3);
+        memset(bitBuffer.data(), 0, MaxBit() >> 3);
     }
 
     bool SbBitBuffer::IsOverflow() const {

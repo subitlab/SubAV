@@ -5,11 +5,12 @@
 /// \copyright © Henry Du @ SubIT 2024. All right reserved.
 /// 
 
-#include <dinput.h>
 #include <string>
 #include <fstream>
 #include <iostream>
 #include <filesystem>
+#include <algorithm>
+#include <format>
 
 #include "../AVCore/StandaloneImage.hpp"
 #include "../AVCore/FrameSequence.hpp"
@@ -27,15 +28,15 @@ namespace SubIT {
 
         void PrintHelpMessage() const {
             const char* message = R"(
-Copyright © Henry Du @ SubIT 2024. All right reserved.
-Part of SubAV SDK, a tool for sbsi, sbws, sbav generation.
-Following commands are available now (You should at least have three arguments):
+Copyright © SubIT 2024. All right reserved.
+Part of SubAV SDK, a tool for sbsi, sbws, sbav processing.
+Following commands are available now (You should provide at least three arguments):
 
 -sig : Follows a image (JPEG, PNG, etc.)  and generate a sbsi file.
--fsg : Follows a video (MP4, MOV etc. This ignore audio track inside) and generate a sbfs file.
--wsg : Follows a audio (MP3, OGG etc.) and generate a sbws file.
+-fsg : Follows a video (MP4, MOV etc. This ignore audio track inside) and generate a sbfs file. (WIP)
+-wsg : Follows a audio (MP3, OGG etc.) and generate a sbws file. (WIP)
 -siv : Follows a sbsi image -- view it.
--fsv : Follows a sbfs video -- view it.
+-fsv : Follows a sbfs video -- view it. (WIP)
 
 )";
             std::cout << message;
@@ -63,8 +64,8 @@ Following commands are available now (You should at least have three arguments):
             factory(&output);
             auto stop = std::chrono::high_resolution_clock::now();
 
-            std::cout << "Totoal compression time used: ";
-            std::cout << std::chrono::duration<float>( stop - start) << std::endl;
+            std::cout << "Total compression time: ";
+            std::cout << std::chrono::duration<float>( stop - start).count() << std::endl;
 
             // Clear all temporary files.
             output.close();
@@ -108,7 +109,7 @@ Following commands are available now (You should at least have three arguments):
         }
 
         static void GenerateWaveSequence(std::string_view filename, std::string_view tmp) {
-            std::cout << "Sorry, but this is still work in progress!\n";
+            std::cout << "Sorry, but this is still working in progress!\n";
         }
         
         void ViewStandalone(std::string_view filename, std::string_view tmp) const {
@@ -120,8 +121,8 @@ Following commands are available now (You should at least have three arguments):
             factory(&insbsi);
             auto stop = std::chrono::high_resolution_clock::now();
     
-            std::cout << "Totoal uncompression time: ";
-            std::cout << std::chrono::duration<float>(stop - start) << std::endl;
+            std::cout << "Total uncompression time: ";
+            std::cout << std::chrono::duration<float>(stop - start).count() << std::endl;
 
             auto tmpName = std::format("{:s}.yuv", tmp);
             std::ofstream ofs(tmpName, std::ios::binary);
@@ -132,7 +133,7 @@ Following commands are available now (You should at least have three arguments):
         }
 
         void ViewFrameSequence(std::string_view filename, std::string_view tmp) const {
-            std::cout << "Sorry, but this is still work in progress!\n";
+            std::cout << "Sorry, but this is still working in progress!\n";
         }
 
         // Execute when command case is equal to 3.

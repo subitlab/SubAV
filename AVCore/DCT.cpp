@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <iostream>
 #include <iterator>
+#include <functional>
 
 namespace SubIT {
     SbDCT::SbDCT(float* beg, ptrdiff_t n, ptrdiff_t s) :begin(beg), delta(n), step(s) {}
