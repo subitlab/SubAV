@@ -160,6 +160,7 @@ namespace SubIT {
     }
 
     size_t SbCodecMaxFOG::EncodeBytes(uint8_t* beg, uint8_t* end, std::ostream* stream) {
+        auto start = std::chrono::high_resolution_clock::now();
         // For future relocate.
         const std::streampos streambeg = stream->tellp();
 
@@ -223,6 +224,8 @@ namespace SubIT {
         // Back to start position to write how many bits encoded.
         stream->seekp(streambeg);
         stream->write(reinterpret_cast<const char*>(&bitsEncoded), sizeof(size_t));
+        auto time_end = std::chrono::high_resolution_clock::now();
+        std::cerr << "File writing and MaxFOG coding time: " << std::chrono::duration<float>(time_end - start).count() << '\n';
         return bitsEncoded;
     }
 
