@@ -25,7 +25,7 @@
 #endif
 
 namespace ikp {
-    byteDecoder::byteDecoder(const unsigned char *freqs, const unsigned char totalCount) {
+    ByteDecoder::ByteDecoder(const unsigned char *freqs, const unsigned char totalCount) {
         int moffset = 0;
 #ifdef _WIN32
         //__builtin_printf("Win32\n");
@@ -131,7 +131,7 @@ namespace ikp {
         decoderFun = (fn)nmem;
         return;
     }
-    byteDecoder::~byteDecoder() {
+    ByteDecoder::~ByteDecoder() {
 #ifdef _WIN32
         VirtualFree((void *)decoderFun, 0, MEM_RELEASE);
 #else
@@ -243,7 +243,7 @@ namespace SubIT {
         auto start = std::chrono::high_resolution_clock::now();
         stream->read(reinterpret_cast<char*>(&nodeCount), sizeof(uint8_t));
         stream->read(reinterpret_cast<char*>(treeBeg), static_cast<std::streamsize>(nodeCount));
-        ikp::byteDecoder bytDec(treeBeg, nodeCount);
+        ikp::ByteDecoder bytDec(treeBeg, nodeCount);
         char *buf = new char[(bits>>3)+1];
         unsigned char *curByte = (unsigned char *)buf;
         const size_t  totalBytes = (bits>>3)+((bits&0x7)?1:0);
