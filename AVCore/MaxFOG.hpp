@@ -12,21 +12,20 @@
 #include <cstddef>
 #include <iosfwd>
 
-namespace ikp {
-    class ByteDecoder {
-        typedef unsigned char(*fn)(unsigned char**, unsigned char*);
-        fn decoderFun;
-        long long int funsiz;
-    public:
-        inline unsigned char operator()(unsigned char **data, unsigned char *bitPos) const {
-            return decoderFun(data, bitPos);
-        }
-        ByteDecoder(const unsigned char *freqs, const unsigned char totalCount);
-        ~ByteDecoder();
-    };
-}
-
 namespace SubIT {
+    namespace ikp {
+        class ByteDecoder {
+            typedef unsigned char(*fn)(unsigned char**, unsigned char*);
+            fn decoderFun;
+            long long int funsiz;
+        public:
+            inline unsigned char operator()(unsigned char **data, unsigned char *bitPos) const {
+                return decoderFun(data, bitPos);
+            }
+            ByteDecoder(const unsigned char *freqs, const unsigned char totalCount);
+            ~ByteDecoder();
+        };
+    }
     //======================
     // MaxFOG Coding
     //======================
