@@ -8,7 +8,7 @@
 ///
 #pragma once
 
-#include "StandaloneImage.hpp"
+#include "OwlVision.hpp"
 
 namespace SubIT {
 
@@ -36,7 +36,7 @@ namespace SubIT {
         // low 16 bit is the denominator. Do division and we get FPS.
         // Inverse the quotient we get "time duration between two frames".
         uint32_t           frameRate;
-        SbStandaloneImage  image; // This is a temporary buffer.
+        SbOwlVisionCoreImage  image; // This is a temporary buffer.
 
         SbFrameSequence() = default;
         SbFrameSequence(uint16_t num, uint16_t den);

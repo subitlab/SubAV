@@ -5,17 +5,16 @@
 /// \copyright © Henry Du @ SubIT 2024. All right reserved.
 /// 
 
+#include <dinput.h>
 #include <string>
 #include <fstream>
 #include <iostream>
 #include <filesystem>
-#include <algorithm>
-#include <format>
 
-#include "../AVCore/StandaloneImage.hpp"
+#include "../AVCore/OwlVision.hpp"
 #include "../AVCore/FrameSequence.hpp"
 
-#include "RFSGenerator.hpp"
+#include "FFmpeg.hpp"
 
 namespace SubIT {
     class SbAVTool {
@@ -29,44 +28,63 @@ namespace SubIT {
         void PrintHelpMessage() const {
             const char* message = R"(
 Copyright © SubIT 2024. All right reserved.
-Part of SubAV SDK, a tool for sbsi, sbws, sbav processing.
-Following commands are available now (You should provide at least three arguments):
 
--sig : Follows a image (JPEG, PNG, etc.)  and generate a sbsi file.
--fsg : Follows a video (MP4, MOV etc. This ignore audio track inside) and generate a sbfs file. (WIP)
--wsg : Follows a audio (MP3, OGG etc.) and generate a sbws file. (WIP)
--siv : Follows a sbsi image -- view it.
--fsv : Follows a sbfs video -- view it. (WIP)
+Part of SubAV SDK, a tool for ovc, dac, mmc generation.
+Following commands are available (You should at least have three arguments):
+
+-ovg : Follows a image (JPEG, PNG, etc.)  and generate a ovc file.
+-dag : Follows a audio (MP3, OGG etc.) and generate a dac file (WIP).
+-mmg : Follows a video (MP4, MOV etc.) and generate a MMC file (WIP).
+-ovv : Follows a ovc image -- view it.
+-dav : Follows a dac audio -- listen to it (WIP).
+-mmv : Follows a mmc video -- feel it (WIP).
+
+========================================== Our Team ==========================================
+Leading developer: Henry Du     - Implemented Fast DCT + Quantization and this software.
+                                - Also designed all logos.
+Core developer   : Steve Wang   - Implemented MaxFOG and IKP byte decoder.
+Add your name here as long as you have made contributions.
+
+Addition thanks to Xincheng Hao who inspired us to do this project and created all logos.
+==============================================================================================
 
 )";
             std::cout << message;
         }
 
-        static void GenerateStandalone(std::string_view filename, std::string_view tmp) {
+        static void MakeOVC(std::string_view filename, std::string_view tmp) {
             using namespace std::string_literals;
             // We will create both property description and raw stream. 
             SbFFMpegCommander::YUVCreateStream(filename, tmp);
             SbFFMpegCommander::YUVCreateDesc(filename, tmp);
-            SbStandaloneImage image;
+            SbOwlVisionCoreImage image;
             // We will hold all temporary names.
             auto yuvTmpName  = std::string(tmp) + ".yuv"s;
             auto descTmpName = std::string(tmp) + ".txt"s;
             
             std::ifstream input(yuvTmpName, std::ios::binary);
-            SbFFMpegCommander::StandaloneFillDescAndAllocate(&image, tmp);
+            SbFFMpegCommander::StandaloneFillDesc(&image, tmp);
+            image.Allocate(::operator new);
+
+            if (!image.SatisfyRestriction()) {
+                std::cout << "Error, your data's width and height must all divisible by 16!" << std::endl;
+                return;
+            }
             input.read(reinterpret_cast<char*>(image.data), image.TotalSize());
             
             // Create a standalone image.
-            std::ofstream output(std::string(tmp) + ".sbsi"s, std::ios::binary);
+            std::ofstream output(std::string(tmp) + ".ovc"s, std::ios::binary);
 
             auto start = std::chrono::high_resolution_clock::now();
-            SbSIFactory factory{ &image };
-            factory(&output);
+            SbOwlVisionContainer factory{ &image };
+            float* buffer = factory(&output, ::operator new);
             auto stop = std::chrono::high_resolution_clock::now();
 
-            std::cout << "Total compression time: ";
-            std::cout << std::chrono::duration<float>( stop - start).count() << std::endl;
+            std::cout << "Totoal compression time used: ";
+            std::cout << std::format("{}\n", std::chrono::duration<float>( stop - start));
 
+            ::operator delete(buffer);
+            ::operator delete(image.data);
             // Clear all temporary files.
             output.close();
             input.close();
@@ -74,7 +92,7 @@ Following commands are available now (You should provide at least three argument
             std::filesystem::remove(descTmpName);
         }
         
-        static void GenerateFrameSequence(std::string_view filename, std::string_view tmp) {
+        static void MakeMMC(std::string_view filename, std::string_view tmp) {
             using namespace std::string_literals;
             SbFFMpegCommander::YUVCreateStream(filename, tmp);
             SbFFMpegCommander::YUVCreateDesc(filename, tmp);
@@ -84,14 +102,14 @@ Following commands are available now (You should provide at least three argument
             uint16_t num = 0, den = 0;
             SbFFMpegCommander::YUVParseDesc(tmp, &sequence.image.width,&sequence.image.height, &num, &den);
             sequence.SetFrameRate(num, den);
-            sequence.image.Allocate();
+            sequence.image.Allocate(::operator new);
             
             auto yuvTmpName  = std::string(tmp) + ".yuv"s;
             auto descTmpName = std::string(tmp) + ".txt"s;
             std::ifstream input(yuvTmpName, std::ios::binary);
-            std::ofstream output(std::string(tmp) + ".sbfs"s, std::ios::binary);
+            std::ofstream output(std::string(tmp) + ".mmc"s, std::ios::binary);
 
-            output.write("SB-AV-FS", 8);
+            output.write("SBAV-MMC", 8);
             output.write(reinterpret_cast<const char*>(&sequence.image.width), 8);
             output.write(reinterpret_cast<const char*>(&sequence.image.height), 8);
             output.write(reinterpret_cast<const char*>(&sequence.frameRate), 4);
@@ -100,6 +118,7 @@ Following commands are available now (You should provide at least three argument
                 input.read(reinterpret_cast<char*>(sequence.image.data), sequence.image.TotalSize());
                 output.write(reinterpret_cast<const char*>(sequence.image.data), sequence.image.TotalSize());
             }
+            ::operator delete(sequence.image.data);
             
             // Clear resources.
             output.close();
@@ -108,31 +127,39 @@ Following commands are available now (You should provide at least three argument
             std::filesystem::remove(descTmpName);
         }
 
-        static void GenerateWaveSequence(std::string_view filename, std::string_view tmp) {
+        static void MakeDAC(std::string_view filename, std::string_view tmp) {
             std::cout << "Sorry, but this is still working in progress!\n";
         }
-        
-        void ViewStandalone(std::string_view filename, std::string_view tmp) const {
-            SubIT::SbStandaloneImage image;
-            SubIT::SbSIFactory factory{ &image };
+
+        static void ViewOVC(std::string_view filename, std::string_view tmp) {
+            SubIT::SbOwlVisionCoreImage image;
+            SubIT::SbOwlVisionContainer factory{ &image };
     
-            std::ifstream insbsi(filename.data(), std::ios::binary);
+            std::ifstream inovc(filename.data(), std::ios::binary);
             std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
-            factory(&insbsi);
+            float* buffer = factory(&inovc, ::operator new);
             auto stop = std::chrono::high_resolution_clock::now();
     
-            std::cout << "Total uncompression time: ";
-            std::cout << std::chrono::duration<float>(stop - start).count() << std::endl;
-
+            std::cout << "Totoal uncompression time: ";
+            std::cout << std::format("{}\n", std::chrono::duration<float>(stop - start));
+            std::cout << std::flush;
+            
             auto tmpName = std::format("{:s}.yuv", tmp);
             std::ofstream ofs(tmpName, std::ios::binary);
             ofs.write(reinterpret_cast<const char*>(image.data), image.TotalSize());
             ofs.close();
             SbFFMpegCommander::StandaloneView(&image, tmpName);
+
+            ::operator delete(buffer);
+            ::operator delete(image.data);
             std::filesystem::remove(tmpName);
         }
 
-        void ViewFrameSequence(std::string_view filename, std::string_view tmp) const {
+        static void ViewDAC(std::string_view filename, std::string_view tmp) {
+            std::cout << "Sorry, but this is still working in progress!\n";
+        }
+
+        static void ViewMMC(std::string_view filename, std::string_view tmp) {
             std::cout << "Sorry, but this is still working in progress!\n";
         }
 
@@ -141,12 +168,15 @@ Following commands are available now (You should provide at least three argument
             std::string command  = args[1];
             std::string filename = args[2];
             std::string tmp      = filename.substr(0,filename.find_last_of('.'));
-            
-            if (command == "-sig") { GenerateStandalone(filename, tmp); }
-            if (command == "-wsg") { GenerateWaveSequence(filename, tmp); }
-            if (command == "-fsg") { GenerateFrameSequence(filename, tmp); }
-            if (command == "-siv") { ViewStandalone(filename, tmp); }
-            if (command == "-fsv") { ViewFrameSequence(filename, tmp); }
+
+            if (command == "-ovg") { MakeOVC(filename, tmp); return; }
+            if (command == "-dag") { MakeDAC(filename, tmp); return; }
+            if (command == "-mmg") { MakeMMC(filename, tmp); return; }
+            if (command == "-ovv") { ViewOVC(filename, tmp); return; }
+            if (command == "-dav") { ViewDAC(filename, tmp); return; }
+            if (command == "-mmv") { ViewMMC(filename, tmp); return; }
+
+            std::cout << "Error, invalid arguments, please check help messages." << std::endl;
         }
 
         // App will use this to execute the whole program.
@@ -161,8 +191,8 @@ Following commands are available now (You should provide at least three argument
     };
 }
 
+
 int main(int argc, char* argv[]) {
-    // To generate an image, uncomment these code and use console argument.
     SubIT::SbAVTool avToolApplication(argc, argv);
     avToolApplication();
     return 0;

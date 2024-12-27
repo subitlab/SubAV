@@ -10,64 +10,54 @@
 #include <cstddef>
 
 namespace SubIT {
-
-    //===========================
+    
+     //===========================
     // Desecrate Cosine Transform
     //===========================
     class SbDCT {
     public:
-        using CoefficientCB = float(*)(ptrdiff_t);
-        using DirectionCB   = void (*)(ptrdiff_t*, ptrdiff_t, ptrdiff_t);
-
+        static constexpr bool dirForward = true;
+        static constexpr bool dirInverse = false;
+        
         // Iterate range.
-        float     *begin;
-        ptrdiff_t  delta;
-
+        float     *src;
         // For extension purpose.
         ptrdiff_t  step;
 
-        SbDCT(float* beg, ptrdiff_t n, ptrdiff_t s = 1);
+        SbDCT(float* beg, ptrdiff_t s = 1);
         SbDCT(const SbDCT&)            = default;
         SbDCT(SbDCT&&)                 = default;
         SbDCT& operator=(const SbDCT&) = default;
         SbDCT& operator=(SbDCT&&)      = default;
 
-        static void Forward(ptrdiff_t* id, ptrdiff_t f, ptrdiff_t F);
-        static void Inverse(ptrdiff_t* id, ptrdiff_t f, ptrdiff_t F);
+        // We currently only have standard JPEG dct implementation.
+        // Also, we assume all your transform is in-placed which means all data will be written to begin.
+        void Transform8(const bool dir);
 
-        // Composed transformer copy mode.
-        void operator()(DirectionCB dir, float* dst,
-            CoefficientCB inside = [](ptrdiff_t) { return 1.F; }, CoefficientCB outside = [](ptrdiff_t) { return 1.F; });
-        // Composed transformer in-place mode.
-        void operator()(DirectionCB dir,
-            CoefficientCB inside = [](ptrdiff_t) { return 1.F; }, CoefficientCB outside = [](ptrdiff_t) { return 1.F; });
+        // Since quantization is not related to column or row, we assume step is 1 here for performance.
+        void Quantize8(const float* const tb);
     };
 
     //==============================
     // Desecrate Cosine Transform 2D
     //==============================
-
     class SbDCT2 {
     public:
-        // Contents from SbDCT, they are pretty much the same.
-        using DirectionCB   = SbDCT::DirectionCB;
-        using CoefficientCB = SbDCT::CoefficientCB;
 
-        float     *begin;
-        ptrdiff_t  delta;
+        float     *src;
         ptrdiff_t  step;
 
         // SbDCT2 can only handle data in a square area.
-        SbDCT2(float* beg, ptrdiff_t length, ptrdiff_t row_size);
+        SbDCT2(float* beg, ptrdiff_t row_size);
         SbDCT2(const SbDCT2&)              = default;
         SbDCT2(SbDCT2&&)                   = default;
         SbDCT2& operator=(const SbDCT2&)   = default;
         SbDCT2& operator=(SbDCT2&&)        = default;
         ~SbDCT2() = default;
 
-        void operator()(DirectionCB dir, float* dst,
-            CoefficientCB inside = [](ptrdiff_t) { return 1.F; }, CoefficientCB outside = [](ptrdiff_t) { return 1.F; });
-        void operator()(DirectionCB dir,
-            CoefficientCB inside = [](ptrdiff_t) { return 1.F; }, CoefficientCB outside = [](ptrdiff_t) { return 1.F; });
+        // According to standard JPEG.
+        void Transform8x8(const bool dir);
+        void Quantize8x8(const float* const tb);
     };
+    
 }
