@@ -5,12 +5,12 @@
 /// \copyright © Henry Du @ SubIT 2024. All right reserved.
 /// 
 
-#include <dinput.h>
 #include <string>
 #include <fstream>
 #include <iostream>
 #include <filesystem>
-
+#include <format>
+#include <vector>
 #include "../AVCore/OwlVision.hpp"
 #include "../AVCore/FrameSequence.hpp"
 
@@ -81,7 +81,7 @@ Addition thanks to Xincheng Hao who inspired us to do this project and created a
             auto stop = std::chrono::high_resolution_clock::now();
 
             std::cout << "Totoal compression time used: ";
-            std::cout << std::format("{}\n", std::chrono::duration<float>( stop - start));
+            std::cout << std::chrono::duration<float>(stop - start).count() << '\n';
 
             ::operator delete(buffer);
             ::operator delete(image.data);
@@ -141,7 +141,7 @@ Addition thanks to Xincheng Hao who inspired us to do this project and created a
             auto stop = std::chrono::high_resolution_clock::now();
     
             std::cout << "Totoal uncompression time: ";
-            std::cout << std::format("{}\n", std::chrono::duration<float>(stop - start));
+            std::cout << std::chrono::duration<float>(stop - start).count() << '\n';
             std::cout << std::flush;
             
             auto tmpName = std::format("{:s}.yuv", tmp);

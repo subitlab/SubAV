@@ -14,8 +14,6 @@
 
 #include "FFmpeg.hpp"
 
-#include <iostream>
-
 namespace SubIT {
     uint32_t SbFFMpegCommander::YUVCreateDesc(std::string_view filename, std::string_view out) {
         std::string fmt = std::format(

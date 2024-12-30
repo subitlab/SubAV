@@ -37,8 +37,8 @@ namespace SubIT {
             }
         };
 
-        static constexpr inline float DCTFactorOrthogonal(ptrdiff_t i) { return i == 0 ? 0.70710678F : 1.F; }
-        static constexpr inline float DCTFactorNormal(ptrdiff_t i)     { return 0.5F; }
+        static constexpr inline float DCTFactorOrthogonal(std::ptrdiff_t i) { return i == 0 ? 0.70710678F : 1.F; }
+        static constexpr inline float DCTFactorNormal(std::ptrdiff_t i)     { return 0.5F; }
         
         template <std::integral Ty>
         static constexpr inline Ty floor_to_octuple(Ty a) {

@@ -8,6 +8,7 @@
 ///
 #include <bit>
 #include <streambuf>
+#include <cstring>
 #include "BitStream.hpp"
 
 namespace SubIT {
