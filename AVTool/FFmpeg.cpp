@@ -46,13 +46,13 @@ namespace SubIT {
         return std::system(fmt.c_str());
     }
 
-    uint32_t SbFFMpegCommander::StandaloneFillDesc(SbOwlVisionCoreImage* image, std::string_view tmpName) {
+    uint32_t SbFFMpegCommander::OwlVisionFillDesc(SbOwlVisionCoreImage* image, std::string_view tmpName) {
         uint16_t tmp1, tmp2;
         YUVParseDesc(tmpName, &image->width, &image->height, &tmp1, &tmp2);
         return 0;
     }
 
-    uint32_t SbFFMpegCommander::StandaloneView(SbOwlVisionCoreImage* image, std::string_view tmpName) {
+    uint32_t SbFFMpegCommander::OwlVisionDisplay(SbOwlVisionCoreImage* image, std::string_view tmpName) {
         return std::system(std::format("ffplay -v quiet -f rawvideo -pixel_format yuv420p -vf vflip -video_size {:d}x{:d} {:s}", image->width, image->height, tmpName).c_str());
     }
 }

@@ -1,8 +1,10 @@
 # SubIT Audio and Video (SubAV) SDK
+
+We came up with this idea because we want a fast and simple SDK that can deal with pretty much all kinds of media import and export in our **VRFZ** game project.
+
 ---
 
 ## The Xiao (OVC)
-We came up with this idea because we want a fast and simple SDK that can deal with pretty much all kinds of media import and export in our **VRFZ** game project.
 
 **JPEG** as an image format is quite good and there are indeed some opensource implementation like **libjpeg**, however, I'm not satisfy with its 'too much compression' and its speed may not be the fast. So, we developed this image format based on **JPEG** and used some techniques to improve performance, and they are ***Rotor SIMD DCT*** and ***IKP MaxFOG Coding***. The image format inside this SDK has its own name *"Xiao"*, in our Chinese this means *"Owl"*, we use this name because owles have nice vision during nights and they are ferocious hunters, but if you are an English speaker, you may prefer calling it "OVC(O-Week)" which means "Owl Vision Core(Container)".
 

@@ -30,7 +30,7 @@ namespace SubIT {
     //==============|===============|================ 
     //        Class implemented all above.
     //===============================================
-    class SbFrameSequence { 
+    class SbMacaqueMixtureCoreSequence { 
     public:
         // This is a special block -- high 16 bit is the numerator and
         // low 16 bit is the denominator. Do division and we get FPS.
@@ -38,11 +38,11 @@ namespace SubIT {
         uint32_t           frameRate;
         SbOwlVisionCoreImage  image; // This is a temporary buffer.
 
-        SbFrameSequence() = default;
-        SbFrameSequence(uint16_t num, uint16_t den);
-        SbFrameSequence(const SbFrameSequence& other) = default;
-        SbFrameSequence(SbFrameSequence&& other) = default;
-        ~SbFrameSequence() = default;
+        SbMacaqueMixtureCoreSequence() = default;
+        SbMacaqueMixtureCoreSequence(uint16_t num, uint16_t den);
+        SbMacaqueMixtureCoreSequence(const SbMacaqueMixtureCoreSequence& other) = default;
+        SbMacaqueMixtureCoreSequence(SbMacaqueMixtureCoreSequence&& other) = default;
+        ~SbMacaqueMixtureCoreSequence() = default;
         
         void     SetFrameRate(uint16_t num, uint16_t den);
         float    GetFrequency() const;

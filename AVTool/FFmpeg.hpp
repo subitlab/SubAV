@@ -15,15 +15,16 @@
 namespace SubIT {
 
     class SbOwlVisionCoreImage;
-    class SbFrameSequence;
+    class SbMacaqueMixtureCoreSequence;
 
     class SbFFMpegCommander {
     public:
         static uint32_t YUVCreateDesc(std::string_view filename, std::string_view out = "temp");
         static uint32_t YUVParseDesc(std::string_view tmpName, size_t* width, size_t* height, uint16_t* num, uint16_t* den);
         static uint32_t YUVCreateStream(std::string_view filename, std::string_view out = "temp");
-        static uint32_t StandaloneFillDesc(SbOwlVisionCoreImage* image, std::string_view tmpName);
-        static uint32_t StandaloneView(SbOwlVisionCoreImage* image, std::string_view tmpName);
+        
+        static uint32_t OwlVisionFillDesc(SbOwlVisionCoreImage* image, std::string_view tmpName);
+        static uint32_t OwlVisionDisplay(SbOwlVisionCoreImage* image, std::string_view tmpName);
     };
 
 }

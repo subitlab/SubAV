@@ -9,10 +9,10 @@
 #include <fstream>
 #include <iostream>
 #include <filesystem>
-#include <format>
-#include <vector>
+
 #include "../AVCore/OwlVision.hpp"
-#include "../AVCore/FrameSequence.hpp"
+#include "../AVCore/MacaqueMixture.hpp"
+#include "../AVCore/DolphinAudition.hpp"
 
 #include "FFmpeg.hpp"
 
@@ -63,7 +63,7 @@ Addition thanks to Xincheng Hao who inspired us to do this project and created a
             auto descTmpName = std::string(tmp) + ".txt"s;
             
             std::ifstream input(yuvTmpName, std::ios::binary);
-            SbFFMpegCommander::StandaloneFillDesc(&image, tmp);
+            SbFFMpegCommander::OwlVisionFillDesc(&image, tmp);
             image.Allocate(::operator new);
 
             if (!image.SatisfyRestriction()) {
@@ -81,7 +81,7 @@ Addition thanks to Xincheng Hao who inspired us to do this project and created a
             auto stop = std::chrono::high_resolution_clock::now();
 
             std::cout << "Totoal compression time used: ";
-            std::cout << std::chrono::duration<float>(stop - start).count() << '\n';
+            std::cout << std::format("{}s\n", std::chrono::duration<float>(stop - start).count());
 
             ::operator delete(buffer);
             ::operator delete(image.data);
@@ -98,7 +98,7 @@ Addition thanks to Xincheng Hao who inspired us to do this project and created a
             SbFFMpegCommander::YUVCreateDesc(filename, tmp);
 
             // Write all information into frame sequence.
-            SbFrameSequence sequence;
+            SbMacaqueMixtureCoreSequence sequence;
             uint16_t num = 0, den = 0;
             SbFFMpegCommander::YUVParseDesc(tmp, &sequence.image.width,&sequence.image.height, &num, &den);
             sequence.SetFrameRate(num, den);
@@ -141,14 +141,14 @@ Addition thanks to Xincheng Hao who inspired us to do this project and created a
             auto stop = std::chrono::high_resolution_clock::now();
     
             std::cout << "Totoal uncompression time: ";
-            std::cout << std::chrono::duration<float>(stop - start).count() << '\n';
+            std::cout << std::format("{}s\n", std::chrono::duration<float>(stop - start).count());
             std::cout << std::flush;
             
             auto tmpName = std::format("{:s}.yuv", tmp);
             std::ofstream ofs(tmpName, std::ios::binary);
             ofs.write(reinterpret_cast<const char*>(image.data), image.TotalSize());
             ofs.close();
-            SbFFMpegCommander::StandaloneView(&image, tmpName);
+            SbFFMpegCommander::OwlVisionDisplay(&image, tmpName);
 
             ::operator delete(buffer);
             ::operator delete(image.data);

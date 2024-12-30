@@ -3,8 +3,8 @@ project(SubAV)
 
 add_library(sbavcore STATIC "")
 target_compile_features(sbavcore PRIVATE cxx_std_20)
-target_sources(sbavcore PRIVATE "AVCore/BitStream.hpp" "AVCore/DCT.hpp" "AVCore/MaxFOG.hpp" "AVCore/FrameSequence.hpp" "AVCore/OwlVision.hpp" "AVCore/IKP.hpp" 
-                                "AVCore/BitStream.cpp" "AVCore/DCT.cpp" "AVCore/MaxFOG.cpp" "AVCore/FrameSequence.cpp" "AVCore/OwlVision.cpp" "AVCore/IKP.cpp"
+target_sources(sbavcore PRIVATE "AVCore/BitStream.hpp" "AVCore/DCT.hpp" "AVCore/MaxFOG.hpp" "AVCore/MacaqueMixture.hpp" "AVCore/OwlVision.hpp" "AVCore/DolphinAudition.hpp" "AVCore/IKP.hpp" 
+                                "AVCore/BitStream.cpp" "AVCore/DCT.cpp" "AVCore/MaxFOG.cpp" "AVCore/MacaqueMixture.cpp" "AVCore/OwlVision.cpp" "AVCore/DolphinAudition.cpp" "AVCore/IKP.cpp"
 )
 
 add_executable(sbavtool "")

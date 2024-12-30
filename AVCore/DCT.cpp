@@ -31,13 +31,9 @@ namespace SubIT {
 #ifdef __SSE__
         __m128 v = _mm_mul_ps(_mm_set_ps(cr, sr, -sr, cr), _mm_set_ps(x0, x0, y0, y0));
         v = _mm_add_ps(v, _mm_shuffle_ps(v, v, 0x4E));
-#ifdef _MSC_VER
-        return std::make_pair(v.m128_f32[3], v.m128_f32[2]);
-#else
-        float m128result[4];
-        _mm_storeu_ps(m128result, v);
-        return std::make_pair(m128result[3], m128result[2]);
-#endif
+        // Avoid _mm_store_ps usage (That costs addition temporary storage and can be slow)!
+        const float* h = reinterpret_cast<const float*>(&v);
+        return std::make_pair(h[3], h[2]);
 #else
         y1_x1[1] = cr * x0 - sr * y0;
         y1_x1[0] = sr * x0 + cr * y0;
