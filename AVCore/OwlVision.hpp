@@ -38,7 +38,7 @@ namespace SubIT {
             }
         };
 
-        static constexpr float quantTablesFwd[2][64] = { {
+        static constexpr float quantTablesFwd8x8[2][64] = { {
                 0.062500F, 0.090909F, 0.100000F, 0.062500F, 0.041667F, 0.025000F, 0.019608F, 0.016393F,
                 0.083333F, 0.083333F, 0.071429F, 0.052632F, 0.038462F, 0.017241F, 0.016667F, 0.018182F,
                 0.071429F, 0.076923F, 0.062500F, 0.041667F, 0.025000F, 0.017544F, 0.014493F, 0.017857F,
@@ -99,15 +99,15 @@ namespace SubIT {
         // Allocate memory to image data
         void       Allocate(void*(*alloc)(size_t size));
 
-        // This is used to do multi thread optimization of this process.
-        // however it's not strictly necessary.
-        static void TransformAndQuantizeRowTask8x8(const bool dir, const size_t pTabId, float* beg,  const size_t rowSize);
         
         // // (I)DCT + (De)Quantization to a single plane, plane is floating point buffer that would store data.
-        void TransformAndQuantizePlane8x8(const bool dir, PlaneType p, float* plane);
+        template <bool dir>
+        void TransformAndQuantizePlane8x8(PlaneType p, float* plane);
     };
 
+
     
+
     //========================================================
     //        SUB AV "OVC" file description
     //========================================================
@@ -134,6 +134,7 @@ namespace SubIT {
         // Just bind the image you want to operate on this, and you can start reading or writing it.
         SbOwlVisionCoreImage* image;
         // Compressed input and output, results would be stored inside image.
+        
         
         // We assume there are no data inside image.
         float* operator()(std::istream* in, void*(*alloc)(size_t));

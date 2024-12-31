@@ -32,7 +32,8 @@ namespace SubIT {
 
         // We currently only have standard JPEG dct implementation.
         // Also, we assume all your transform is in-placed which means all data will be written to begin.
-        void Transform8(const bool dir);
+        template <bool Dir>
+        void Transform8();
 
         // Since quantization is not related to column or row, we assume step is 1 here for performance.
         void Quantize8(const float* const tb);
@@ -56,7 +57,8 @@ namespace SubIT {
         ~SbDCT2() = default;
 
         // According to standard JPEG.
-        void Transform8x8(const bool dir);
+        template <bool Dir>
+        void Transform8x8();
         void Quantize8x8(const float* const tb);
     };
     

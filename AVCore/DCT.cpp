@@ -45,7 +45,11 @@ namespace SubIT {
         
     SbDCT::SbDCT(float* beg, ptrdiff_t s) :src(beg), step(s) {}
 
-    void SbDCT::Transform8(const bool dir) {
+    template void SbDCT::Transform8<SbDCT::dirForward>();
+    template void SbDCT::Transform8<SbDCT::dirInverse>();
+
+    template <bool Dir>
+    void SbDCT::Transform8() {
         // Rotor SIMD DCT.
         // This algorithm contains only 7 multiplication when enable simd, this is the best case
         // and 22 mul without simd enabled, this is the worst case.
@@ -63,8 +67,7 @@ namespace SubIT {
         constexpr float C = 0.2777851165F;
         constexpr float D = 0.1913417161F;
 
-        switch (dir) {
-        case dirForward: {
+        if constexpr (Dir == dirForward) {
             // Stage one values
             const auto[s0, s1] = pam(src[0 * step], src[7 * step]);
             const auto[s2, s3] = pam(src[1 * step], src[6 * step]);
@@ -88,9 +91,8 @@ namespace SubIT {
             const auto[t1_0, t1_1] = rot<b, B>(s3, s5); // 1 (SSE) / 4 mul
             src[3 * step] = t0_0 - t1_1;
             src[5 * step] = t0_1 - t1_0;
-            return;
         }
-        case dirInverse: {
+        else if constexpr (Dir == dirInverse) {
             // First stage
             const auto [s0, s1] = pam(src[0 * step], src[4 * step], a);
             const auto [s2, s3] = rot<D, d>(src[2 * step], src[6 * step]);
@@ -120,8 +122,6 @@ namespace SubIT {
             src[5 * step] = k3 + t2;
             src[3 * step] = k1 + t3;
             src[4 * step] = k1 - t3;
-            return;
-        }
         }
     }
 
@@ -138,24 +138,28 @@ namespace SubIT {
 
     SbDCT2::SbDCT2(float* beg, ptrdiff_t row_size) : src(beg), step(row_size) {}
 
-    void SbDCT2::Transform8x8(const bool dir) {
-        SbDCT row0(src + 0 * step, 1); row0.Transform8(dir); 
-        SbDCT row1(src + 1 * step, 1); row1.Transform8(dir);
-        SbDCT row2(src + 2 * step, 1); row2.Transform8(dir);
-        SbDCT row3(src + 3 * step, 1); row3.Transform8(dir);
-        SbDCT row4(src + 4 * step, 1); row4.Transform8(dir);
-        SbDCT row5(src + 5 * step, 1); row5.Transform8(dir);
-        SbDCT row6(src + 6 * step, 1); row6.Transform8(dir);
-        SbDCT row7(src + 7 * step, 1); row7.Transform8(dir);
+    template void SbDCT2::Transform8x8<SbDCT::dirForward>();
+    template void SbDCT2::Transform8x8<SbDCT::dirInverse>();
 
-        SbDCT col0(src + 0, step); col0.Transform8(dir);
-        SbDCT col1(src + 1, step); col1.Transform8(dir);
-        SbDCT col2(src + 2, step); col2.Transform8(dir);
-        SbDCT col3(src + 3, step); col3.Transform8(dir);
-        SbDCT col4(src + 4, step); col4.Transform8(dir);
-        SbDCT col5(src + 5, step); col5.Transform8(dir);
-        SbDCT col6(src + 6, step); col6.Transform8(dir);
-        SbDCT col7(src + 7, step); col7.Transform8(dir);
+    template <bool Dir>
+    void SbDCT2::Transform8x8() {
+        SbDCT row0(src + 0 * step, 1); row0.Transform8<Dir>(); 
+        SbDCT row1(src + 1 * step, 1); row1.Transform8<Dir>();
+        SbDCT row2(src + 2 * step, 1); row2.Transform8<Dir>();
+        SbDCT row3(src + 3 * step, 1); row3.Transform8<Dir>();
+        SbDCT row4(src + 4 * step, 1); row4.Transform8<Dir>();
+        SbDCT row5(src + 5 * step, 1); row5.Transform8<Dir>();
+        SbDCT row6(src + 6 * step, 1); row6.Transform8<Dir>();
+        SbDCT row7(src + 7 * step, 1); row7.Transform8<Dir>();
+
+        SbDCT col0(src + 0, step); col0.Transform8<Dir>();
+        SbDCT col1(src + 1, step); col1.Transform8<Dir>();
+        SbDCT col2(src + 2, step); col2.Transform8<Dir>();
+        SbDCT col3(src + 3, step); col3.Transform8<Dir>();
+        SbDCT col4(src + 4, step); col4.Transform8<Dir>();
+        SbDCT col5(src + 5, step); col5.Transform8<Dir>();
+        SbDCT col6(src + 6, step); col6.Transform8<Dir>();
+        SbDCT col7(src + 7, step); col7.Transform8<Dir>();
     }
 
     void SbDCT2::Quantize8x8(const float* const tb) {
