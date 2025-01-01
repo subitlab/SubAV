@@ -38,7 +38,6 @@ namespace SubIT {
     }
 
     size_t SbCodecMaxFOG::EncodeBytes(uint8_t* beg, uint8_t* end, std::ostream* stream) {
-        auto start = std::chrono::high_resolution_clock::now();
         // For future relocate.
         const std::streampos streambeg = stream->tellp();
 
@@ -126,7 +125,7 @@ namespace SubIT {
         stream->read(buf, totalBytes);
         
         size_t bytesDecoded = 0;
-        for(uint8_t bitPos = 0x80; (curByte - reinterpret_cast<uint8_t*>(buf)) < totalBytes || (0x80 >> (bits & 0x7)) >= bitPos; ++beg, ++bytesDecoded) {
+        for (uint8_t bitPos = 0x80; (curByte - reinterpret_cast<uint8_t*>(buf)) < totalBytes || (0x80 >> (bits & 0x7)) >= bitPos; ++beg, ++bytesDecoded) {
             *beg = bytDec(&curByte, &bitPos);
         }
         
