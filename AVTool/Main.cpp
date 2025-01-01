@@ -83,7 +83,7 @@ Addition thanks to Xincheng Hao who inspired us to do this project and created a
             float* buffer = factory(&output, ::operator new);
             auto stop = std::chrono::high_resolution_clock::now();
 
-            std::cout << "Totoal compression time used: ";
+            std::cout << "Total compression time used: ";
             std::cout << std::format("{}s\n", std::chrono::duration<float>(stop - start).count());
 
             ::operator delete(buffer);
@@ -143,7 +143,7 @@ Addition thanks to Xincheng Hao who inspired us to do this project and created a
             float* buffer = factory(&inovc, ::operator new);
             auto stop = std::chrono::high_resolution_clock::now();
     
-            std::cout << "Totoal uncompression time: ";
+            std::cout << "Total uncompression time: ";
             std::cout << std::format("{}s\n", std::chrono::duration<float>(stop - start).count());
             std::cout << std::flush;
             
