@@ -6,39 +6,13 @@
 /// \date      9.11.2024
 /// \copyright © HenryDu 2024. All right reserved.
 ///
+#include <iostream>
 
 #include "DCT.hpp"
-
-#include <cmath>
-#include <numbers>
-#include <algorithm>
-#include <iostream>
-#include <iterator>
-
-#ifndef __SSE__
-#define __SSE__
-#endif
-
-#ifdef __SSE__
-#include <xmmintrin.h>
-#endif
+#include "SIMD.hpp"
 
 namespace SubIT {
-    // This is the soul of our DCT implementation
-    // If you want SSE acceleration just simply define __SSE__ macro on top of this file.
-    template <float cr, float sr>
-    static auto rot(const  float x0, const  float y0) {
-#ifdef __SSE__
-        __m128 v = _mm_mul_ps(_mm_set_ps(cr, sr, -sr, cr), _mm_set_ps(x0, x0, y0, y0));
-        v = _mm_add_ps(v, _mm_shuffle_ps(v, v, 0x4E));
-        // Avoid _mm_store_ps usage (That costs addition temporary storage and can be slow)!
-        const float* h = reinterpret_cast<const float*>(&v);
-        return std::make_pair(h[3], h[2]);
-#else
-        y1_x1[1] = cr * x0 - sr * y0;
-        y1_x1[0] = sr * x0 + cr * y0;
-#endif
-    }
+    
     constexpr inline static auto pam(const float a, const float b, const float k = 1.F) {
         return std::make_pair(k * (a + b), k * (a - b));
     }
@@ -78,30 +52,30 @@ namespace SubIT {
             src[0 * step] = a * (s0 + s6 + s2 + s4); // 1 mul
             src[4 * step] = a * (s0 + s6 - s2 - s4); // 1 mul
 
-            const auto[r0_0, r0_1] = rot<b, B>(s7, s1); // 1 (SSE) / 4 mul 
-            const auto[r1_0, r1_1] = rot<c, C>(s5, s3); // 1 (SSE) / 4 mul 
+            const auto[r0_0, r0_1] = SbSIMD::Rotate2D(b, B, s7, s1); // 1 (SSE) / 4 mul 
+            const auto[r1_0, r1_1] = SbSIMD::Rotate2D(c, C, s5, s3); // 1 (SSE) / 4 mul 
             src[1 * step] = r0_1 + r1_1;
             src[7 * step] = r1_0 - r0_0;
         
-            const auto[g0, g1] =  rot<d, D>(s2 - s4, s0 - s6); // 1 (SSE) / 4 mul
+            const auto[g0, g1] =  SbSIMD::Rotate2D(d, D, s2 - s4, s0 - s6) ; // 1 (SSE) / 4 mul
             src[2 * step] =  g1;
             src[6 * step] = -g0;
 
-            const auto[t0_0, t0_1] = rot<c, C>(s1, s7); // 1 (SSE) / 4 mul
-            const auto[t1_0, t1_1] = rot<b, B>(s3, s5); // 1 (SSE) / 4 mul
+            const auto[t0_0, t0_1] = SbSIMD::Rotate2D(c, C, s1, s7); // 1 (SSE) / 4 mul
+            const auto[t1_0, t1_1] = SbSIMD::Rotate2D(b, B, s3, s5); // 1 (SSE) / 4 mul
             src[3 * step] = t0_0 - t1_1;
             src[5 * step] = t0_1 - t1_0;
         }
         else if constexpr (Dir == dirInverse) {
             // First stage
             const auto [s0, s1] = pam(src[0 * step], src[4 * step], a);
-            const auto [s2, s3] = rot<D, d>(src[2 * step], src[6 * step]);
+            const auto [s2, s3] = SbSIMD::Rotate2D(D, d, src[2 * step], src[6 * step]);
 
             // Second stage
-            const auto [g0, g1] = rot<B, b>(src[1 * step], src[7 * step]);
-            const auto [g2, g3] = rot<b, B>(src[3 * step], src[5 * step]);
-            const auto [g4, g5] = rot<c, C>(src[1 * step], src[7 * step]);
-            const auto [g6, g7] = rot<C, c>(src[3 * step], src[5 * step]);
+            const auto [g0, g1] = SbSIMD::Rotate2D(B, b, src[1 * step], src[7 * step]);
+            const auto [g2, g3] = SbSIMD::Rotate2D(b, B, src[3 * step], src[5 * step]);
+            const auto [g4, g5] = SbSIMD::Rotate2D(c, C, src[1 * step], src[7 * step]);
+            const auto [g6, g7] = SbSIMD::Rotate2D(C, c, src[3 * step], src[5 * step]);
 
             // Third stage 0
             const float t0 = g1 + g7;

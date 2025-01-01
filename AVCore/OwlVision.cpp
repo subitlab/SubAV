@@ -16,7 +16,7 @@
 #include "OwlVision.hpp"
 #include "MaxFOG.hpp"
 #include "DCT.hpp"
-
+#include "SIMD.hpp"
 
 
 namespace SubIT {
@@ -68,6 +68,7 @@ namespace SubIT {
         const size_t   pTabId  = (p + 1) >> 1;
 
         for (size_t i = 0; i != pSize; i += 4) {
+            // We don't need convertion simd optimization for this part cause int to float is already very fast.
             if constexpr (dir == SbDCT::dirForward) {
                 plane[i + 0] =  static_cast<float>((data + pOffset)[i + 0]) - 128.F;
                 plane[i + 1] =  static_cast<float>((data + pOffset)[i + 1]) - 128.F;
@@ -97,17 +98,18 @@ namespace SubIT {
         }
 
         for (size_t i = 0; i != pSize; i += 4) {
+            SbSIMD::FloatToInt4(plane + i);
             if constexpr (dir == SbDCT::dirForward) {
-                reinterpret_cast<int8_t*>(data + pOffset)[i + 0] = static_cast<int8_t>(std::roundf(plane[i + 0]));
-                reinterpret_cast<int8_t*>(data + pOffset)[i + 1] = static_cast<int8_t>(std::roundf(plane[i + 1]));
-                reinterpret_cast<int8_t*>(data + pOffset)[i + 2] = static_cast<int8_t>(std::roundf(plane[i + 2]));
-                reinterpret_cast<int8_t*>(data + pOffset)[i + 3] = static_cast<int8_t>(std::roundf(plane[i + 3]));
+                reinterpret_cast<int8_t*>(data + pOffset)[i + 0] = static_cast<int8_t>(*reinterpret_cast<int*>(plane + (i + 0)));
+                reinterpret_cast<int8_t*>(data + pOffset)[i + 1] = static_cast<int8_t>(*reinterpret_cast<int*>(plane + (i + 1)));
+                reinterpret_cast<int8_t*>(data + pOffset)[i + 2] = static_cast<int8_t>(*reinterpret_cast<int*>(plane + (i + 2)));
+                reinterpret_cast<int8_t*>(data + pOffset)[i + 3] = static_cast<int8_t>(*reinterpret_cast<int*>(plane + (i + 3)));
             }
             else if constexpr (dir == SbDCT::dirInverse) {
-                (data + pOffset)[i + 0] =  static_cast<uint8_t>(std::roundf(plane[i + 0]) + 128.F);
-                (data + pOffset)[i + 1] =  static_cast<uint8_t>(std::roundf(plane[i + 1]) + 128.F);
-                (data + pOffset)[i + 2] =  static_cast<uint8_t>(std::roundf(plane[i + 2]) + 128.F);
-                (data + pOffset)[i + 3] =  static_cast<uint8_t>(std::roundf(plane[i + 3]) + 128.F);
+                (data + pOffset)[i + 0] =  static_cast<uint8_t>(*reinterpret_cast<int*>(plane + (i + 0)) + 0x7F);
+                (data + pOffset)[i + 1] =  static_cast<uint8_t>(*reinterpret_cast<int*>(plane + (i + 1)) + 0x7F);
+                (data + pOffset)[i + 2] =  static_cast<uint8_t>(*reinterpret_cast<int*>(plane + (i + 2)) + 0x7F);
+                (data + pOffset)[i + 3] =  static_cast<uint8_t>(*reinterpret_cast<int*>(plane + (i + 3)) + 0x7F);
             }
         }
     }
