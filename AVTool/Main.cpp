@@ -10,6 +10,8 @@
 #include <fstream>
 #include <iostream>
 #include <filesystem>
+#include <format> //std::format is used
+#include <vector> //std::pmr::vector is used. Please stop deleting **used** headers.
 
 #include "../AVCore/OwlVision.hpp"
 #include "../AVCore/MacaqueMixture.hpp"

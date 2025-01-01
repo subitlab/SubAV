@@ -12,6 +12,7 @@
 #include <istream>
 #include <ostream>
 #include <future> // for std::async.
+#include <functional> //for std::invoke
 
 #include "OwlVision.hpp"
 #include "MaxFOG.hpp"
