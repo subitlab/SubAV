@@ -1,9 +1,9 @@
 ///
 /// \file      SIMD.hpp
-/// \brief     All simd related functionalities are implemented in this file.
+/// \brief     All simd related functionalities are implemented in this file (New year's first feature!).
 /// \details   SSE/NEON or sth are all here these methods are reusable, not only for this SubAV project.
 /// \author    HenryDu
-/// \date      10.11.2024
+/// \date      1.1.2025
 /// \copyright © HenryDu 2024. All right reserved.
 ///
 #pragma once
