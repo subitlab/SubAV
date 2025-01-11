@@ -127,6 +127,7 @@ namespace SubIT {
         
         size_t bytesDecoded = 0;
         for(uint8_t bitPos = 0x80; (curByte - reinterpret_cast<uint8_t*>(buf)) < totalBytes || (0x80 >> (bits & 0x7)) >= bitPos; ++beg, ++bytesDecoded) {
+            // Will cause an exception!
             *beg = bytDec(&curByte, &bitPos);
         }
         

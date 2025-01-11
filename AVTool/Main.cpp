@@ -44,8 +44,8 @@ Following commands are available (You should at least have three arguments):
 Leading developer: Henry Du     - Implemented Fast DCT + Quantization and this software.
                                 - Also designed all logos.
 Core developer   : Steve Wang   - Implemented MaxFOG and IKP byte decoder.
+Contributors     : Jincheng Xu  - Managed out 4x4, 16x16 and 32x32 dct quantize matrices with AI.
 Add your name here as long as you have made contributions.
-
 Addition thanks to Xincheng Hao who inspired us to do this project and created all logos.
 ==============================================================================================
 

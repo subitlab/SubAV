@@ -55,11 +55,11 @@ namespace SubIT {
         data = static_cast<uint8_t*>(alloc(TotalSize()));
     }
 
-    template void SbOwlVisionCoreImage::TransformAndQuantizePlane8x8<SbDCT::dirForward>(PlaneType p, float* plane);
-    template void SbOwlVisionCoreImage::TransformAndQuantizePlane8x8<SbDCT::dirInverse>(PlaneType p, float* plane);
+    template void SbOwlVisionCoreImage::TransformAndQuantizePlane<SbDCT::dirForward>(PlaneType p, float* plane);
+    template void SbOwlVisionCoreImage::TransformAndQuantizePlane<SbDCT::dirInverse>(PlaneType p, float* plane);
 
     template <bool dir>
-    void SbOwlVisionCoreImage::TransformAndQuantizePlane8x8(PlaneType p, float* plane) {
+    void SbOwlVisionCoreImage::TransformAndQuantizePlane(PlaneType p, float* plane) {
         
         const size_t   pWidth  = PlaneDelta(p, 0);
         const size_t   pHeight = PlaneDelta(p, 1);
@@ -83,16 +83,16 @@ namespace SubIT {
             }
         }
 
-        for (size_t y = 0; y < pHeight; y += 8) {
-            for (size_t x = 0; x < pWidth; x += 8) {
+        for (size_t y = 0; y < pHeight; y += 32) {
+            for (size_t x = 0; x < pWidth; x += 32) {
                 SbDCT2 transformer(plane + (y * pWidth + x), pWidth);
                 if constexpr (dir == SbDCT::dirForward) {
-                    transformer.Transform8x8<SbDCT::dirForward>();
-                    transformer.Quantize8x8(SbOwlVisionConstants::quantTablesFwd8x8[pTabId]);
+                    transformer.Transform32x32<SbDCT::dirForward>();
+                    transformer.Quantize32x32(SbOwlVisionConstants::quantTablesFwd32x32[pTabId]);
                 }
                 else if constexpr (dir == SbDCT::dirInverse) {
-                    transformer.Quantize8x8(SbOwlVisionConstants::quantTablesInv8x8[pTabId]);
-                    transformer.Transform8x8<SbDCT::dirInverse>();
+                    transformer.Quantize32x32(SbOwlVisionConstants::quantTablesInv32x32[pTabId]);
+                    transformer.Transform32x32<SbDCT::dirInverse>();
                 }
             }
         }
@@ -116,7 +116,7 @@ namespace SubIT {
 
     template <bool dir>
     inline auto PlaneTransformTask(SbOwlVisionCoreImage* image, SbOwlVisionCoreImage::PlaneType plane, float* buffer) {
-        std::invoke(&SbOwlVisionCoreImage::TransformAndQuantizePlane8x8<dir>, image, plane, buffer + image->PlaneOffset(plane));
+        std::invoke(&SbOwlVisionCoreImage::TransformAndQuantizePlane<dir>, image, plane, buffer + image->PlaneOffset(plane));
     }
     
     float* SbOwlVisionContainer::operator()(std::istream* in, void*(*alloc)(size_t)) {
