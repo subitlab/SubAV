@@ -83,8 +83,8 @@ namespace SubIT {
             }
         }
 
-        for (size_t y = 0; y < pHeight; y += 32) {
-            for (size_t x = 0; x < pWidth; x += 32) {
+        for (size_t y = 0; y != pHeight; y += 32) {
+            for (size_t x = 0; x != pWidth; x += 32) {
                 SbDCT2 transformer(plane + (y * pWidth + x), pWidth);
                 if constexpr (dir == SbDCT::dirForward) {
                     transformer.Transform32x32<SbDCT::dirForward>();

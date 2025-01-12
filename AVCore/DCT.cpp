@@ -27,6 +27,8 @@ namespace SubIT {
     template void SbDCT::Transform32<SbDCT::dirForward>();
     template void SbDCT::Transform32<SbDCT::dirInverse>();
 
+    // 8 dimension has its special implementation for commemorative significance
+    // This special implementation is also a lot faster than lee dct in most cases.
     template <bool Dir>
     void SbDCT::Transform8() {
         // Rotor SIMD DCT.
@@ -116,7 +118,7 @@ namespace SubIT {
     template <bool Dir>
     void SbDCT::Transform32() {
         if constexpr (Dir == dirForward) {
-            base2_lee_dct_impl::forward_transform_with_step<32, float>(src, step);  
+            base2_lee_dct_impl::forward_transform_with_step<32, float>(src, step);
         } else {
             base2_lee_dct_impl::inverse_transform_with_step<32, float>(src, step);
         }
