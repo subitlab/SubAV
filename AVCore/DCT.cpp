@@ -14,98 +14,106 @@
 
 namespace SubIT {
     
-    constexpr inline static auto pam(const float a, const float b, const float k = 1.F) {
-        return std::make_pair(k * (a + b), k * (a - b));
-    }
-        
     SbDCT::SbDCT(float* beg, ptrdiff_t s) :src(beg), step(s) {}
-
+    
+    template void SbDCT::Transform4<SbDCT::dirForward>();
+    template void SbDCT::Transform4<SbDCT::dirInverse>();
     template void SbDCT::Transform8<SbDCT::dirForward>();
     template void SbDCT::Transform8<SbDCT::dirInverse>();
     template void SbDCT::Transform16<SbDCT::dirForward>();
     template void SbDCT::Transform16<SbDCT::dirInverse>();
     template void SbDCT::Transform32<SbDCT::dirForward>();
     template void SbDCT::Transform32<SbDCT::dirInverse>();
+    template void SbDCT::Quantize4<SbDCT::dirForward>(const float* const);
+    template void SbDCT::Quantize4<SbDCT::dirInverse>(const float* const);
+    template void SbDCT::Quantize8<SbDCT::dirForward>(const float* const);
+    template void SbDCT::Quantize8<SbDCT::dirInverse>(const float* const);
+    template void SbDCT::Quantize16<SbDCT::dirForward>(const float* const);
+    template void SbDCT::Quantize16<SbDCT::dirInverse>(const float* const);
+    template void SbDCT::Quantize32<SbDCT::dirForward>(const float* const);
+    template void SbDCT::Quantize32<SbDCT::dirInverse>(const float* const);
 
-    // 8 dimension has its special implementation for commemorative significance
-    // This special implementation is also a lot faster than lee dct in most cases.
+    float& SbDCT::At(ptrdiff_t i) {
+        return src[i * step];
+    }
+    
+    template <bool Dir>
+    void SbDCT::Transform4() {
+        constexpr float a = 0.5F;
+        constexpr float b = 0.270598F;
+        constexpr float c = 0.653281F;
+        if constexpr (Dir == dirForward) {
+            const auto [k0, k1] = SbSIMD::Rotate2D(a, a, At(0) + At(3), At(1) + At(2));
+            const auto [k2, k3] = SbSIMD::Rotate2D(b, c, At(0) - At(3), At(1) - At(2));
+            At(0) = k1;
+            At(1) = k3;
+            At(2) = k0;
+            At(3) = k2;
+        }
+        else if constexpr (Dir == dirInverse) {
+            const auto [t0, t1] = SbSIMD::Rotate2D(a, a, At(0), At(2));
+            const auto [t2, t3] = SbSIMD::Rotate2D(b, c, At(1), At(3));
+            At(0) = t1 + t3;
+            At(1) = t0 + t2;
+            At(2) = t0 - t2;
+            At(3) = t1 - t3;
+        }
+    }
+    
     template <bool Dir>
     void SbDCT::Transform8() {
-        // Rotor SIMD DCT.
-        // This algorithm contains only 7 multiplication when enable simd, this is the best case
-        // and 22 mul without simd enabled, this is the worst case.
-        // Compared to original O(n^2) algorithm this saved (64 - 22) == 42 multiplications at least,
-        // and saves (64 - 7) == 57 multiplications.
-        // Total time complexity is O(24 == 8 * log_2{8}), however with too much optimization
-        // Its time cost can even reach to O(1).
-        
-        // All times sqrt(2 / 8) which is 0.5
         constexpr float a = 0.3535533905F;
         constexpr float b = 0.4903926402F;
         constexpr float c = 0.4157348061F;
         constexpr float d = 0.4619397662F;
-        constexpr float B = 0.0975451610F;
-        constexpr float C = 0.2777851165F;
-        constexpr float D = 0.1913417161F;
+        constexpr float e = 0.0975451610F;
+        constexpr float f = 0.2777851165F;
+        constexpr float g = 0.1913417161F;
         
         if constexpr (Dir == dirForward) {
-            // Stage one values
-            const auto[s0, s1] = pam(src[0 * step], src[7 * step]);
-            const auto[s2, s3] = pam(src[1 * step], src[6 * step]);
-            const auto[s4, s5] = pam(src[2 * step], src[5 * step]);
-            const auto[s6, s7] = pam(src[3 * step], src[4 * step]);
-        
-            // Two fastest terms.
-            src[0 * step] = a * (s0 + s6 + s2 + s4); // 1 mul
-            src[4 * step] = a * (s0 + s6 - s2 - s4); // 1 mul
-        
-            const auto[r0_0, r0_1] = SbSIMD::Rotate2D(b, B, s7, s1); // 1 (SSE) / 4 mul 
-            const auto[r1_0, r1_1] = SbSIMD::Rotate2D(c, C, s5, s3); // 1 (SSE) / 4 mul 
-            src[1 * step] = r0_1 + r1_1;
-            src[7 * step] = r1_0 - r0_0;
-        
-            const auto[g0, g1] =  SbSIMD::Rotate2D(d, D, s2 - s4, s0 - s6) ; // 1 (SSE) / 4 mul
-            src[2 * step] =  g1;
-            src[6 * step] = -g0;
-        
-            const auto[t0_0, t0_1] = SbSIMD::Rotate2D(c, C, s1, s7); // 1 (SSE) / 4 mul
-            const auto[t1_0, t1_1] = SbSIMD::Rotate2D(b, B, s3, s5); // 1 (SSE) / 4 mul
-            src[3 * step] = t0_0 - t1_1;
-            src[5 * step] = t0_1 - t1_0;
+            const float s0 = At(0) + At(7), s1 = At(0) - At(7);
+            const float s2 = At(1) + At(6), s3 = At(1) - At(6);
+            const float s4 = At(2) + At(5), s5 = At(2) - At(5);
+            const float s6 = At(3) + At(4), s7 = At(3) - At(4);
+            const auto [g0, g1] = SbSIMD::Rotate2D(a, a, s0 + s6, s2 + s4);
+            const auto [g2, g3] = SbSIMD::Rotate2D(d, g, s2 - s4, s0 - s6);
+            const auto [r0, r1] = SbSIMD::Rotate2D(b, e, s7, s1); 
+            const auto [r2, r3] = SbSIMD::Rotate2D(c, f, s5, s3);
+            const auto [t0, t1] = SbSIMD::Rotate2D(c, f, s1, s7);
+            const auto [t2, t3] = SbSIMD::Rotate2D(b, e, s3, s5);
+            At(0) =  g1;
+            At(2) =  g3;
+            At(4) =  g0;
+            At(6) = -g2;
+            At(7) = r2 - r0;
+            At(5) = t1 - t2;
+            At(3) = t0 - t3;
+            At(1) = r1 + r3;
         }
         else if constexpr (Dir == dirInverse) {
-            // First stage
-            const auto [s0, s1] = pam(src[0 * step], src[4 * step], a);
-            const auto [s2, s3] = SbSIMD::Rotate2D(D, d, src[2 * step], src[6 * step]);
-        
-            // Second stage
-            const auto [g0, g1] = SbSIMD::Rotate2D(B, b, src[1 * step], src[7 * step]);
-            const auto [g2, g3] = SbSIMD::Rotate2D(b, B, src[3 * step], src[5 * step]);
-            const auto [g4, g5] = SbSIMD::Rotate2D(c, C, src[1 * step], src[7 * step]);
-            const auto [g6, g7] = SbSIMD::Rotate2D(C, c, src[3 * step], src[5 * step]);
-        
-            // Third stage 0
+            const auto [s1, s0] = SbSIMD::Rotate2D(a, a, At(0), At(4));
+            const auto [s2, s3] = SbSIMD::Rotate2D(g, d, At(2), At(6));
+            const auto [g0, g1] = SbSIMD::Rotate2D(e, b, At(1), At(7));
+            const auto [g2, g3] = SbSIMD::Rotate2D(b, e, At(3), At(5));
+            const auto [g4, g5] = SbSIMD::Rotate2D(c, f, At(1), At(7));
+            const auto [g6, g7] = SbSIMD::Rotate2D(f, c, At(3), At(5));
             const float t0 = g1 + g7;
             const float t1 = g3 - g4;
             const float t2 = g2 - g5;
             const float t3 = g0 - g6;
-        
-            // Third stage 1.
-            const auto [k0, k1] = pam(s0, s3);
-            const auto [k2, k3] = pam(s1, s2);
-        
-            // Final stage FFT emplace.
-            src[0 * step] = k0 + t0;
-            src[7 * step] = k0 - t0;
-            src[1 * step] = k2 - t1;
-            src[6 * step] = k2 + t1;
-            src[2 * step] = k3 - t2;
-            src[5 * step] = k3 + t2;
-            src[3 * step] = k1 + t3;
-            src[4 * step] = k1 - t3;
+            const float k0 = s0 + s3, k1 = s0 - s3;
+            const float k2 = s1 + s2, k3 = s1 - s2;
+            At(0) = k0 + t0;
+            At(2) = k3 - t2;
+            At(4) = k1 - t3;
+            At(6) = k2 + t1;
+            At(7) = k0 - t0;
+            At(5) = k3 + t2;
+            At(3) = k1 + t3;
+            At(1) = k2 - t1;
         }
     }
-
+    
     template <bool Dir>
     void SbDCT::Transform16() {
         if constexpr (Dir == dirForward) {
@@ -114,7 +122,7 @@ namespace SubIT {
             base2_lee_dct_impl::inverse_transform_with_step<16, float>(src, step);
         }
     }
-
+    
     template <bool Dir>
     void SbDCT::Transform32() {
         if constexpr (Dir == dirForward) {
@@ -125,56 +133,83 @@ namespace SubIT {
     }
 
     template <bool Dir>
-    void SbDCT::TransformLinear1024() {
-        // This uses no-step versions because audio sequences are linear (1D).
-        if constexpr (Dir == dirForward) {
-            base2_lee_dct_impl::forward_transform<1024, float>(src);  
-        } else {
-            base2_lee_dct_impl::inverse_transform<1024, float>(src);
-        }
+    void SbDCT::Quantize4(const float* const tb) {
+        if constexpr (Dir == dirForward) { SbSIMD::DivA4(src, tb); return; }
+        if constexpr (Dir == dirInverse) { SbSIMD::MulA4(src, tb); return; }
     }
-
+    
+    template <bool Dir>
     void SbDCT::Quantize8 (const float* const tb) {
-        src[0] *= tb[0];
-        src[1] *= tb[1];
-        src[2] *= tb[2];
-        src[3] *= tb[3];
-        src[4] *= tb[4];
-        src[5] *= tb[5];
-        src[6] *= tb[6];
-        src[7] *= tb[7];
-    }
-    void SbDCT::Quantize16(const float* const tb) {
-        src[0] *= tb[0]; src[8] *= tb[8];
-        src[1] *= tb[1]; src[9] *= tb[9];
-        src[2] *= tb[2]; src[10] *= tb[10];
-        src[3] *= tb[3]; src[11] *= tb[11];
-        src[4] *= tb[4]; src[12] *= tb[12];
-        src[5] *= tb[5]; src[13] *= tb[13];
-        src[6] *= tb[6]; src[14] *= tb[14];
-        src[7] *= tb[7]; src[15] *= tb[15];
+        if constexpr (Dir == dirForward) { SbSIMD::DivA4(src + 0, tb + 0);
+                                           SbSIMD::DivA4(src + 4, tb + 4); return; }
+        if constexpr (Dir == dirInverse) { SbSIMD::MulA4(src + 0, tb + 0);
+                                           SbSIMD::MulA4(src + 4, tb + 4); return; }
     }
 
+    template <bool Dir>
+    void SbDCT::Quantize16(const float* const tb) {
+        if constexpr (Dir == dirForward) {  SbSIMD::DivA4(src + 0,  tb + 0);
+                                            SbSIMD::DivA4(src + 4,  tb + 4);
+                                            SbSIMD::DivA4(src + 8,  tb + 8);
+                                            SbSIMD::DivA4(src + 12, tb + 12); return;}
+        if constexpr (Dir == dirInverse) {  SbSIMD::MulA4(src + 0,  tb + 0);
+                                            SbSIMD::MulA4(src + 4,  tb + 4);
+                                            SbSIMD::MulA4(src + 8,  tb + 8);
+                                            SbSIMD::MulA4(src + 12, tb + 12); return;}
+    }
+
+    template <bool Dir>
     void SbDCT::Quantize32(const float* const tb) {
-        src[0] *= tb[0]; src[8] *= tb[8];   src[16] *= tb[16];  src[24] *= tb[24];
-        src[1] *= tb[1]; src[9] *= tb[9];   src[17] *= tb[17];  src[25] *= tb[25];
-        src[2] *= tb[2]; src[10] *= tb[10]; src[18] *= tb[18];  src[26] *= tb[26];
-        src[3] *= tb[3]; src[11] *= tb[11]; src[19] *= tb[19];  src[27] *= tb[27];
-        src[4] *= tb[4]; src[12] *= tb[12]; src[20] *= tb[20];  src[28] *= tb[28];
-        src[5] *= tb[5]; src[13] *= tb[13]; src[21] *= tb[21];  src[29] *= tb[29];
-        src[6] *= tb[6]; src[14] *= tb[14]; src[22] *= tb[22];  src[30] *= tb[30];
-        src[7] *= tb[7]; src[15] *= tb[15]; src[23] *= tb[23];  src[31] *= tb[31];
+        if constexpr (Dir == dirForward) {  SbSIMD::DivA4(src + 0,   tb + 0);
+                                            SbSIMD::DivA4(src + 4,   tb + 4);
+                                            SbSIMD::DivA4(src + 8,   tb + 8);
+                                            SbSIMD::DivA4(src + 12,  tb + 12);
+                                            SbSIMD::DivA4(src + 16,  tb + 16);
+                                            SbSIMD::DivA4(src + 20,  tb + 20);
+                                            SbSIMD::DivA4(src + 24,  tb + 24);
+                                            SbSIMD::DivA4(src + 28,  tb + 28); return;}
+        if constexpr (Dir == dirInverse) {  SbSIMD::MulA4(src + 0,   tb + 0); 
+                                            SbSIMD::MulA4(src + 4,   tb + 4); 
+                                            SbSIMD::MulA4(src + 8,   tb + 8); 
+                                            SbSIMD::MulA4(src + 12,  tb + 12);
+                                            SbSIMD::MulA4(src + 16,  tb + 16);
+                                            SbSIMD::MulA4(src + 20,  tb + 20);
+                                            SbSIMD::MulA4(src + 24,  tb + 24);
+                                            SbSIMD::MulA4(src + 28,  tb + 28); return; }
     }
 
     SbDCT2::SbDCT2(float* beg, ptrdiff_t row_size) : src(beg), step(row_size) {}
-
+    
+    template void SbDCT2::Transform4x4<SbDCT::dirForward>();
+    template void SbDCT2::Transform4x4<SbDCT::dirInverse>();
     template void SbDCT2::Transform8x8<SbDCT::dirForward>();
     template void SbDCT2::Transform8x8<SbDCT::dirInverse>();
     template void SbDCT2::Transform16x16<SbDCT::dirForward>();
     template void SbDCT2::Transform16x16<SbDCT::dirInverse>();
     template void SbDCT2::Transform32x32<SbDCT::dirForward>();
     template void SbDCT2::Transform32x32<SbDCT::dirInverse>();
+    template void SbDCT2::Quantize4x4<SbDCT::dirForward>(const float* const);
+    template void SbDCT2::Quantize4x4<SbDCT::dirInverse>(const float* const);
+    template void SbDCT2::Quantize8x8<SbDCT::dirForward>(const float* const);
+    template void SbDCT2::Quantize8x8<SbDCT::dirInverse>(const float* const);
+    template void SbDCT2::Quantize16x16<SbDCT::dirForward>(const float* const);
+    template void SbDCT2::Quantize16x16<SbDCT::dirInverse>(const float* const);
+    template void SbDCT2::Quantize32x32<SbDCT::dirForward>(const float* const);
+    template void SbDCT2::Quantize32x32<SbDCT::dirInverse>(const float* const);
 
+    template <bool Dir>
+    void SbDCT2::Transform4x4() {
+        SbDCT row0(src + 0 * step, 1); row0.Transform4<Dir>();
+        SbDCT row1(src + 1 * step, 1); row1.Transform4<Dir>();
+        SbDCT row2(src + 2 * step, 1); row2.Transform4<Dir>();
+        SbDCT row3(src + 3 * step, 1); row3.Transform4<Dir>();
+
+        SbDCT col0(src + 0, step); col0.Transform4<Dir>();
+        SbDCT col1(src + 1, step); col1.Transform4<Dir>();
+        SbDCT col2(src + 2, step); col2.Transform4<Dir>();
+        SbDCT col3(src + 3, step); col3.Transform4<Dir>();
+    }
+    
     template <bool Dir>
     void SbDCT2::Transform8x8() {
         SbDCT row0(src + 0 * step, 1); row0.Transform8<Dir>(); 
@@ -185,7 +220,7 @@ namespace SubIT {
         SbDCT row5(src + 5 * step, 1); row5.Transform8<Dir>();
         SbDCT row6(src + 6 * step, 1); row6.Transform8<Dir>();
         SbDCT row7(src + 7 * step, 1); row7.Transform8<Dir>();
-
+    
         SbDCT col0(src + 0, step); col0.Transform8<Dir>();
         SbDCT col1(src + 1, step); col1.Transform8<Dir>();
         SbDCT col2(src + 2, step); col2.Transform8<Dir>();
@@ -195,7 +230,7 @@ namespace SubIT {
         SbDCT col6(src + 6, step); col6.Transform8<Dir>();
         SbDCT col7(src + 7, step); col7.Transform8<Dir>();
     }
-
+    
     template <bool Dir>
     void SbDCT2::Transform16x16() {
         SbDCT row0 (src + 0  * step, 1); row0 .Transform16<Dir>(); 
@@ -214,7 +249,7 @@ namespace SubIT {
         SbDCT row13(src + 13 * step, 1); row13.Transform16<Dir>();
         SbDCT row14(src + 14 * step, 1); row14.Transform16<Dir>();
         SbDCT row15(src + 15 * step, 1); row15.Transform16<Dir>();
-
+    
         SbDCT col0(src  + 0,  step); col0 .Transform16<Dir>();
         SbDCT col1(src  + 1,  step); col1 .Transform16<Dir>();
         SbDCT col2(src  + 2,  step); col2 .Transform16<Dir>();
@@ -232,7 +267,7 @@ namespace SubIT {
         SbDCT col14(src + 14, step); col14.Transform16<Dir>();
         SbDCT col15(src + 15, step); col15.Transform16<Dir>();
     }
-
+    
     template <bool Dir>
     void SbDCT2::Transform32x32() {
         SbDCT row0 (src + 0  * step, 1); row0 .Transform32<Dir>(); 
@@ -267,7 +302,7 @@ namespace SubIT {
         SbDCT row29(src + 29 * step, 1); row29.Transform32<Dir>();
         SbDCT row30(src + 30 * step, 1); row30.Transform32<Dir>();
         SbDCT row31(src + 31 * step, 1); row31.Transform32<Dir>();
-
+    
         SbDCT col0(src  + 0,  step); col0 .Transform32<Dir>();
         SbDCT col1(src  + 1,  step); col1 .Transform32<Dir>();
         SbDCT col2(src  + 2,  step); col2 .Transform32<Dir>();
@@ -302,70 +337,79 @@ namespace SubIT {
         SbDCT col31(src + 31, step); col31.Transform32<Dir>();
     }
     
+    template <bool Dir> 
+    void SbDCT2::Quantize4x4(const float* const tb) {
+        SbDCT row0(src + 0 * step); row0.Quantize4<Dir>(tb + (0 << 2));
+        SbDCT row1(src + 1 * step); row1.Quantize4<Dir>(tb + (1 << 2));
+        SbDCT row2(src + 2 * step); row2.Quantize4<Dir>(tb + (2 << 2));
+        SbDCT row3(src + 3 * step); row3.Quantize4<Dir>(tb + (3 << 2));
+    }
+
+    template <bool Dir> 
     void SbDCT2::Quantize8x8(const float* const tb) {
-        SbDCT row0(src + 0 * step); row0.Quantize8(tb + (0 << 3));
-        SbDCT row1(src + 1 * step); row1.Quantize8(tb + (1 << 3));
-        SbDCT row2(src + 2 * step); row2.Quantize8(tb + (2 << 3));
-        SbDCT row3(src + 3 * step); row3.Quantize8(tb + (3 << 3));
-        SbDCT row4(src + 4 * step); row4.Quantize8(tb + (4 << 3));
-        SbDCT row5(src + 5 * step); row5.Quantize8(tb + (5 << 3));
-        SbDCT row6(src + 6 * step); row6.Quantize8(tb + (6 << 3));
-        SbDCT row7(src + 7 * step); row7.Quantize8(tb + (7 << 3));
+        SbDCT row0(src + 0 * step); row0.Quantize8<Dir>(tb + (0 << 3));
+        SbDCT row1(src + 1 * step); row1.Quantize8<Dir>(tb + (1 << 3));
+        SbDCT row2(src + 2 * step); row2.Quantize8<Dir>(tb + (2 << 3));
+        SbDCT row3(src + 3 * step); row3.Quantize8<Dir>(tb + (3 << 3));
+        SbDCT row4(src + 4 * step); row4.Quantize8<Dir>(tb + (4 << 3));
+        SbDCT row5(src + 5 * step); row5.Quantize8<Dir>(tb + (5 << 3));
+        SbDCT row6(src + 6 * step); row6.Quantize8<Dir>(tb + (6 << 3));
+        SbDCT row7(src + 7 * step); row7.Quantize8<Dir>(tb + (7 << 3));
     }
 
+    template <bool Dir>
     void SbDCT2::Quantize16x16(const float* const tb) {
-        SbDCT row0 (src + 0  * step); row0 .Quantize16(tb + (0 << 4));
-        SbDCT row1 (src + 1  * step); row1 .Quantize16(tb + (1 << 4));
-        SbDCT row2 (src + 2  * step); row2 .Quantize16(tb + (2 << 4));
-        SbDCT row3 (src + 3  * step); row3 .Quantize16(tb + (3 << 4));
-        SbDCT row4 (src + 4  * step); row4 .Quantize16(tb + (4 << 4));
-        SbDCT row5 (src + 5  * step); row5 .Quantize16(tb + (5 << 4));
-        SbDCT row6 (src + 6  * step); row6 .Quantize16(tb + (6 << 4));
-        SbDCT row7 (src + 7  * step); row7 .Quantize16(tb + (7 << 4));
-        SbDCT row8 (src + 8  * step); row8 .Quantize16(tb + (8  << 4));
-        SbDCT row9 (src + 9  * step); row9 .Quantize16(tb + (9  << 4));
-        SbDCT row10(src + 10 * step); row10.Quantize16(tb + (10 << 4));
-        SbDCT row11(src + 11 * step); row11.Quantize16(tb + (11 << 4));
-        SbDCT row12(src + 12 * step); row12.Quantize16(tb + (12 << 4));
-        SbDCT row13(src + 13 * step); row13.Quantize16(tb + (13 << 4));
-        SbDCT row14(src + 14 * step); row14.Quantize16(tb + (14 << 4));
-        SbDCT row15(src + 15 * step); row15.Quantize16(tb + (15 << 4));
+        SbDCT row0 (src + 0  * step); row0 .Quantize16<Dir>(tb + (0 << 4));
+        SbDCT row1 (src + 1  * step); row1 .Quantize16<Dir>(tb + (1 << 4));
+        SbDCT row2 (src + 2  * step); row2 .Quantize16<Dir>(tb + (2 << 4));
+        SbDCT row3 (src + 3  * step); row3 .Quantize16<Dir>(tb + (3 << 4));
+        SbDCT row4 (src + 4  * step); row4 .Quantize16<Dir>(tb + (4 << 4));
+        SbDCT row5 (src + 5  * step); row5 .Quantize16<Dir>(tb + (5 << 4));
+        SbDCT row6 (src + 6  * step); row6 .Quantize16<Dir>(tb + (6 << 4));
+        SbDCT row7 (src + 7  * step); row7 .Quantize16<Dir>(tb + (7 << 4));
+        SbDCT row8 (src + 8  * step); row8 .Quantize16<Dir>(tb + (8  << 4));
+        SbDCT row9 (src + 9  * step); row9 .Quantize16<Dir>(tb + (9  << 4));
+        SbDCT row10(src + 10 * step); row10.Quantize16<Dir>(tb + (10 << 4));
+        SbDCT row11(src + 11 * step); row11.Quantize16<Dir>(tb + (11 << 4));
+        SbDCT row12(src + 12 * step); row12.Quantize16<Dir>(tb + (12 << 4));
+        SbDCT row13(src + 13 * step); row13.Quantize16<Dir>(tb + (13 << 4));
+        SbDCT row14(src + 14 * step); row14.Quantize16<Dir>(tb + (14 << 4));
+        SbDCT row15(src + 15 * step); row15.Quantize16<Dir>(tb + (15 << 4));
     }
 
+    template <bool Dir>
     void SbDCT2::Quantize32x32(const float* const tb) {
-        SbDCT row0 (src + 0  * step); row0 .Quantize32(tb + (0  << 5));
-        SbDCT row1 (src + 1  * step); row1 .Quantize32(tb + (1  << 5));
-        SbDCT row2 (src + 2  * step); row2 .Quantize32(tb + (2  << 5));
-        SbDCT row3 (src + 3  * step); row3 .Quantize32(tb + (3  << 5));
-        SbDCT row4 (src + 4  * step); row4 .Quantize32(tb + (4  << 5));
-        SbDCT row5 (src + 5  * step); row5 .Quantize32(tb + (5  << 5));
-        SbDCT row6 (src + 6  * step); row6 .Quantize32(tb + (6  << 5));
-        SbDCT row7 (src + 7  * step); row7 .Quantize32(tb + (7  << 5));
-        SbDCT row8 (src + 8  * step); row8 .Quantize32(tb + (8  << 5));
-        SbDCT row9 (src + 9  * step); row9 .Quantize32(tb + (9  << 5));
-        SbDCT row10(src + 10 * step); row10.Quantize32(tb + (10 << 5));
-        SbDCT row11(src + 11 * step); row11.Quantize32(tb + (11 << 5));
-        SbDCT row12(src + 12 * step); row12.Quantize32(tb + (12 << 5));
-        SbDCT row13(src + 13 * step); row13.Quantize32(tb + (13 << 5));
-        SbDCT row14(src + 14 * step); row14.Quantize32(tb + (14 << 5));
-        SbDCT row15(src + 15 * step); row15.Quantize32(tb + (15 << 5));
-        SbDCT row16(src + 16 * step); row16.Quantize32(tb + (16 << 5));
-        SbDCT row17(src + 17 * step); row17.Quantize32(tb + (17 << 5));
-        SbDCT row18(src + 18 * step); row18.Quantize32(tb + (18 << 5));
-        SbDCT row19(src + 19 * step); row19.Quantize32(tb + (19 << 5));
-        SbDCT row20(src + 20 * step); row20.Quantize32(tb + (20 << 5));
-        SbDCT row21(src + 21 * step); row21.Quantize32(tb + (21 << 5));
-        SbDCT row22(src + 22 * step); row22.Quantize32(tb + (22 << 5));
-        SbDCT row23(src + 23 * step); row23.Quantize32(tb + (23 << 5));
-        SbDCT row24(src + 24 * step); row24.Quantize32(tb + (24 << 5));
-        SbDCT row25(src + 25 * step); row25.Quantize32(tb + (25 << 5));
-        SbDCT row26(src + 26 * step); row26.Quantize32(tb + (26 << 5));
-        SbDCT row27(src + 27 * step); row27.Quantize32(tb + (27 << 5));
-        SbDCT row28(src + 28 * step); row28.Quantize32(tb + (28 << 5));
-        SbDCT row29(src + 29 * step); row29.Quantize32(tb + (29 << 5));
-        SbDCT row30(src + 30 * step); row30.Quantize32(tb + (30 << 5));
-        SbDCT row31(src + 31 * step); row31.Quantize32(tb + (31 << 5));
+        SbDCT row0 (src + 0  * step); row0 .Quantize32<Dir>(tb + (0  << 5));
+        SbDCT row1 (src + 1  * step); row1 .Quantize32<Dir>(tb + (1  << 5));
+        SbDCT row2 (src + 2  * step); row2 .Quantize32<Dir>(tb + (2  << 5));
+        SbDCT row3 (src + 3  * step); row3 .Quantize32<Dir>(tb + (3  << 5));
+        SbDCT row4 (src + 4  * step); row4 .Quantize32<Dir>(tb + (4  << 5));
+        SbDCT row5 (src + 5  * step); row5 .Quantize32<Dir>(tb + (5  << 5));
+        SbDCT row6 (src + 6  * step); row6 .Quantize32<Dir>(tb + (6  << 5));
+        SbDCT row7 (src + 7  * step); row7 .Quantize32<Dir>(tb + (7  << 5));
+        SbDCT row8 (src + 8  * step); row8 .Quantize32<Dir>(tb + (8  << 5));
+        SbDCT row9 (src + 9  * step); row9 .Quantize32<Dir>(tb + (9  << 5));
+        SbDCT row10(src + 10 * step); row10.Quantize32<Dir>(tb + (10 << 5));
+        SbDCT row11(src + 11 * step); row11.Quantize32<Dir>(tb + (11 << 5));
+        SbDCT row12(src + 12 * step); row12.Quantize32<Dir>(tb + (12 << 5));
+        SbDCT row13(src + 13 * step); row13.Quantize32<Dir>(tb + (13 << 5));
+        SbDCT row14(src + 14 * step); row14.Quantize32<Dir>(tb + (14 << 5));
+        SbDCT row15(src + 15 * step); row15.Quantize32<Dir>(tb + (15 << 5));
+        SbDCT row16(src + 16 * step); row16.Quantize32<Dir>(tb + (16 << 5));
+        SbDCT row17(src + 17 * step); row17.Quantize32<Dir>(tb + (17 << 5));
+        SbDCT row18(src + 18 * step); row18.Quantize32<Dir>(tb + (18 << 5));
+        SbDCT row19(src + 19 * step); row19.Quantize32<Dir>(tb + (19 << 5));
+        SbDCT row20(src + 20 * step); row20.Quantize32<Dir>(tb + (20 << 5));
+        SbDCT row21(src + 21 * step); row21.Quantize32<Dir>(tb + (21 << 5));
+        SbDCT row22(src + 22 * step); row22.Quantize32<Dir>(tb + (22 << 5));
+        SbDCT row23(src + 23 * step); row23.Quantize32<Dir>(tb + (23 << 5));
+        SbDCT row24(src + 24 * step); row24.Quantize32<Dir>(tb + (24 << 5));
+        SbDCT row25(src + 25 * step); row25.Quantize32<Dir>(tb + (25 << 5));
+        SbDCT row26(src + 26 * step); row26.Quantize32<Dir>(tb + (26 << 5));
+        SbDCT row27(src + 27 * step); row27.Quantize32<Dir>(tb + (27 << 5));
+        SbDCT row28(src + 28 * step); row28.Quantize32<Dir>(tb + (28 << 5));
+        SbDCT row29(src + 29 * step); row29.Quantize32<Dir>(tb + (29 << 5));
+        SbDCT row30(src + 30 * step); row30.Quantize32<Dir>(tb + (30 << 5));
+        SbDCT row31(src + 31 * step); row31.Quantize32<Dir>(tb + (31 << 5));
     }
-    
-    
 }

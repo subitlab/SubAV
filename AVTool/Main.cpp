@@ -72,21 +72,20 @@ Addition thanks to Xincheng Hao who inspired us to do this project and created a
                 std::cout << "Error, your data's width and height must all divisible by 16!" << std::endl;
                 return;
             }
-            input.read(reinterpret_cast<char*>(image.data), image.TotalSize());
+            input.read(reinterpret_cast<char*>(image.data), image.size());
             
             // Create a standalone image.
             std::ofstream output(std::string(tmp) + ".ovc"s, std::ios::binary);
 
             auto start = std::chrono::high_resolution_clock::now();
             SbOwlVisionContainer factory{ &image };
-            float* buffer = factory(&output, ::operator new);
+            factory(&output, ::operator new);
             auto stop = std::chrono::high_resolution_clock::now();
 
             std::cout << "Totoal compression time used: ";
             std::cout << std::format("{}s\n", std::chrono::duration<float>(stop - start).count());
 
-            ::operator delete(buffer);
-            ::operator delete(image.data);
+            image.Deallocate(::operator delete);
             // Clear all temporary files.
             output.close();
             input.close();
@@ -117,8 +116,8 @@ Addition thanks to Xincheng Hao who inspired us to do this project and created a
             output.write(reinterpret_cast<const char*>(&sequence.frameRate), 4);
             
             for (; input.peek() != EOF;) {
-                input.read(reinterpret_cast<char*>(sequence.image.data), sequence.image.TotalSize());
-                output.write(reinterpret_cast<const char*>(sequence.image.data), sequence.image.TotalSize());
+                input.read(reinterpret_cast<char*>(sequence.image.data), sequence.image.size());
+                output.write(reinterpret_cast<const char*>(sequence.image.data), sequence.image.size());
             }
             ::operator delete(sequence.image.data);
             
@@ -139,7 +138,7 @@ Addition thanks to Xincheng Hao who inspired us to do this project and created a
     
             std::ifstream inovc(filename.data(), std::ios::binary);
             std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
-            float* buffer = factory(&inovc, ::operator new);
+            factory(&inovc, ::operator new);
             auto stop = std::chrono::high_resolution_clock::now();
     
             std::cout << "Totoal uncompression time: ";
@@ -148,12 +147,11 @@ Addition thanks to Xincheng Hao who inspired us to do this project and created a
             
             auto tmpName = std::format("{:s}.yuv", tmp);
             std::ofstream ofs(tmpName, std::ios::binary);
-            ofs.write(reinterpret_cast<const char*>(image.data), image.TotalSize());
+            ofs.write(reinterpret_cast<const char*>(image.data), image.size());
             ofs.close();
             SbFFMpegCommander::OwlVisionDisplay(&image, tmpName);
 
-            ::operator delete(buffer);
-            ::operator delete(image.data);
+            image.Deallocate(::operator delete);
             std::filesystem::remove(tmpName);
         }
 
