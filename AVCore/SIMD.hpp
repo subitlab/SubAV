@@ -62,7 +62,16 @@ namespace SubIT {
 #endif
         }
         
-        
+        static inline void yuv2rgba(const float y, const float u, const float v, unsigned char *dest) {
+            __m128 t = _mm_set_ps(y, u, v, 1);
+            t = _mm_add_ps(t, _mm_mul_ps(_mm_set_ps(0, -0.39645, 2.03211, 0), _mm_set_ps(y, u, v, 0)));
+            t = _mm_add_ps(t, _mm_mul_ps(_mm_set_ps(1.13983, -0.5806, 0, 0), _mm_set_ps(y, u, v, 0)));
+            const float *res = reinterpret_cast<const float*>(&t);
+            *dest = (unsigned char)(*res);
+            dest[1] = (unsigned char)(res[1]);
+            dest[2] = (unsigned char)(res[2]);
+            dest[3] = (unsigned char)(res[3]);
+        }
     };
     
 }
