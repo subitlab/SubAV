@@ -2,9 +2,9 @@
 /// \file      SIMD.hpp
 /// \brief     All simd related functionalities are implemented in this file (New year's first feature!).
 /// \details   SSE/NEON or sth are all here these methods are reusable, not only for this SubAV project.
-/// \author    HenryDu
-/// \date      1.1.2025
-/// \copyright © HenryDu 2024. All right reserved.
+/// \author    HenryDu, Steve Wang
+/// \date      1.22.2025
+/// \copyright © HenryDu 2024, Steve Wang 2025
 ///
 #pragma once
 #include <utility>
@@ -24,6 +24,8 @@
 #define SB_SIMD_ARM 0
 
 #if SB_SIMD_X86 >= SB_SIMD_X86_SSE1
+#include <mmintrin.h>
+#include <pmmintrin.h>
 #include <xmmintrin.h>
 #endif
 
@@ -62,7 +64,30 @@ namespace SubIT {
 #endif
         }
         
-        
+        static inline void yuv2rgba(const float y, const float u, const float v, unsigned char *dest) {
+#if SB_SIMD_X86 >= SB_SIMD_X86_SSE1
+            __m128  t = _mm_set_ps(y, u, v, 255.F);
+            __m128  r1 = _mm_mul_ps(t, _mm_set_ps(1.F,       0.F, 1.13983F,   0.F));
+            __m128  r2 = _mm_mul_ps(t, _mm_set_ps(1.F, -0.39645F, -0.5806F,   0.F));
+                    r1 = _mm_hadd_ps(r1, r2);
+            __m128  r3 = _mm_mul_ps(t, _mm_set_ps(1.F,  2.03211F,      0.F,   0.F));
+                    r2 = _mm_mul_ps(t, _mm_set_ps(0.F,       0.F,      0.F,   1.F));
+                    r3 = _mm_hadd_ps(r3, r2);
+                    r1 = _mm_hadd_ps(r1, r3);   //result.
+            __m64   rs = _mm_cvtps_pi16(r1);    //result, signed int16.
+                                                //it's annoying that SSE has no instruction to convert its result directly into uint8, and we therefore need such a dirty workaround.
+            const unsigned long long res = reinterpret_cast<const unsigned long long>(rs);
+            *dest = *(unsigned char *)(&res);
+            dest[1] = *(unsigned char *)((&res)+2);
+            dest[2] = *(unsigned char *)((&res)+4);
+            dest[3] = *(unsigned char *)((&res)+6);
+#else
+            *dest = (unsigned char)(y+v*1.13983F);
+            dest[1] = (unsigned char)(y+u*-0.39645F+v*-0.5806F);
+            dest[2] = (unsigned char)(y+u*2.03211F);
+            dest[3] = 0xff;
+#endif
+        }
     };
     
 }
