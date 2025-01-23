@@ -10,13 +10,14 @@
 #include <fstream>
 #include <iostream>
 #include <filesystem>
-#include <format> //std::format is used
-#include <vector> //std::pmr::vector is used. Please stop deleting **used** headers.
+#include <thread>
 
+#include "../AVCore/RGBA.hpp"
 #include "../AVCore/OwlVision.hpp"
 #include "../AVCore/MacaqueMixture.hpp"
 #include "../AVCore/DolphinAudition.hpp"
 
+#include "PPM.hpp"
 #include "FFmpeg.hpp"
 
 namespace SubIT {
@@ -46,8 +47,8 @@ Following commands are available (You should at least have three arguments):
 Leading developer: Henry Du     - Implemented Fast DCT + Quantization and this software.
                                 - Also designed all logos.
 Core developer   : Steve Wang   - Implemented MaxFOG and IKP byte decoder.
+Contributors     : Jincheng Xu  - Managed out 4x4, 16x16 and 32x32 dct quantize matrices with AI.
 Add your name here as long as you have made contributions.
-
 Addition thanks to Xincheng Hao who inspired us to do this project and created all logos.
 ==============================================================================================
 
@@ -73,21 +74,20 @@ Addition thanks to Xincheng Hao who inspired us to do this project and created a
                 std::cout << "Error, your data's width and height must all divisible by 16!" << std::endl;
                 return;
             }
-            input.read(reinterpret_cast<char*>(image.data), image.TotalSize());
+            input.read(reinterpret_cast<char*>(image.entity), image.size());
             
             // Create a standalone image.
             std::ofstream output(std::string(tmp) + ".ovc"s, std::ios::binary);
 
             auto start = std::chrono::high_resolution_clock::now();
             SbOwlVisionContainer factory{ &image };
-            float* buffer = factory(&output, ::operator new);
+            factory(&output, ::operator new);
             auto stop = std::chrono::high_resolution_clock::now();
 
-            std::cout << "Total compression time used: ";
+            std::cout << "Totoal compression time used: ";
             std::cout << std::format("{}s\n", std::chrono::duration<float>(stop - start).count());
 
-            ::operator delete(buffer);
-            ::operator delete(image.data);
+            image.Deallocate(::operator delete);
             // Clear all temporary files.
             output.close();
             input.close();
@@ -118,10 +118,10 @@ Addition thanks to Xincheng Hao who inspired us to do this project and created a
             output.write(reinterpret_cast<const char*>(&sequence.frameRate), 4);
             
             for (; input.peek() != EOF;) {
-                input.read(reinterpret_cast<char*>(sequence.image.data), sequence.image.TotalSize());
-                output.write(reinterpret_cast<const char*>(sequence.image.data), sequence.image.TotalSize());
+                input.read(reinterpret_cast<char*>(sequence.image.entity), sequence.image.size());
+                output.write(reinterpret_cast<const char*>(sequence.image.entity), sequence.image.size());
             }
-            ::operator delete(sequence.image.data);
+            ::operator delete(sequence.image.entity);
             
             // Clear resources.
             output.close();
@@ -135,26 +135,25 @@ Addition thanks to Xincheng Hao who inspired us to do this project and created a
         }
 
         static void ViewOVC(std::string_view filename, std::string_view tmp) {
-            SubIT::SbOwlVisionCoreImage image;
-            SubIT::SbOwlVisionContainer factory{ &image };
+            SbOwlVisionCoreImage image;
+            SbOwlVisionContainer factory{ &image };
     
             std::ifstream inovc(filename.data(), std::ios::binary);
             std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
-            float* buffer = factory(&inovc, ::operator new);
+            factory(&inovc, ::operator new);
             auto stop = std::chrono::high_resolution_clock::now();
     
-            std::cout << "Total uncompression time: ";
+            std::cout << "Totoal uncompression time: ";
             std::cout << std::format("{}s\n", std::chrono::duration<float>(stop - start).count());
             std::cout << std::flush;
             
             auto tmpName = std::format("{:s}.yuv", tmp);
             std::ofstream ofs(tmpName, std::ios::binary);
-            ofs.write(reinterpret_cast<const char*>(image.data), image.TotalSize());
+            ofs.write(reinterpret_cast<const char*>(image.entity), image.size());
             ofs.close();
             SbFFMpegCommander::OwlVisionDisplay(&image, tmpName);
 
-            ::operator delete(buffer);
-            ::operator delete(image.data);
+            image.Deallocate(::operator delete);
             std::filesystem::remove(tmpName);
         }
 
@@ -166,18 +165,40 @@ Addition thanks to Xincheng Hao who inspired us to do this project and created a
             std::cout << "Sorry, but this is still working in progress!\n";
         }
 
+        static void MakePPM(std::string_view filename, std::string_view tmp) {
+            SbOwlVisionCoreImage image;
+            SbOwlVisionContainer factory{ &image };
+
+            std::ifstream inovc(filename.data(), std::ios::binary);
+            std::ofstream oppm(std::format("{:s}.ppm", tmp));
+
+            factory(&inovc, ::operator new);
+
+            SbRGB rgb{ &image };
+            rgb(reinterpret_cast<uint8_t*>(image.shadow));
+            SbPPM ppm{ reinterpret_cast<uint8_t*>(image.shadow), image.width, image.height };
+            ppm(&oppm);
+
+            std::cout << "Conversion complete!" << std::endl;
+
+            inovc.close();
+            oppm .close();
+            image.Deallocate(::operator delete);
+        }
+
         // Execute when command case is equal to 3.
         void OperateFile() const {
             std::string command  = args[1];
             std::string filename = args[2];
             std::string tmp      = filename.substr(0,filename.find_last_of('.'));
 
-            if (command == "-ovg") { MakeOVC(filename, tmp); return; }
-            if (command == "-dag") { MakeDAC(filename, tmp); return; }
-            if (command == "-mmg") { MakeMMC(filename, tmp); return; }
-            if (command == "-ovv") { ViewOVC(filename, tmp); return; }
-            if (command == "-dav") { ViewDAC(filename, tmp); return; }
-            if (command == "-mmv") { ViewMMC(filename, tmp); return; }
+            if (command == "-ovg")    { MakeOVC(filename, tmp); return; }
+            if (command == "-dag")    { MakeDAC(filename, tmp); return; }
+            if (command == "-mmg")    { MakeMMC(filename, tmp); return; }
+            if (command == "-ovppm")  { MakePPM(filename, tmp); return; }
+            if (command == "-ovv")    { ViewOVC(filename, tmp); return; }
+            if (command == "-dav")    { ViewDAC(filename, tmp); return; }
+            if (command == "-mmv")    { ViewMMC(filename, tmp); return; }
 
             std::cout << "Error, invalid arguments, please check help messages." << std::endl;
         }
@@ -196,7 +217,7 @@ Addition thanks to Xincheng Hao who inspired us to do this project and created a
 
 
 int main(int argc, char* argv[]) {
-    SubIT::SbAVTool avToolApplication(argc, argv);
-    avToolApplication();
+    SubIT::SbAVTool avTool(argc, argv);
+    avTool();
     return 0;
 }

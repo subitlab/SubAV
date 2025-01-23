@@ -8,8 +8,8 @@
 ///
 #pragma once
 
-#include <memory_resource>
-#include <vector>
+#include <cstdint>
+#include <iosfwd>
 
 namespace SubIT {
 
@@ -19,10 +19,12 @@ namespace SubIT {
 
     class SbBitBuffer {
     public:
-        std::pmr::vector<std::uint8_t> bitBuffer;
-        std::size_t                    bitPosition;
+        std::uint8_t*                  buf;
+        std::size_t                    pos;
+        std::size_t                    capacity;
 
-        SbBitBuffer(std::size_t bitSize);
+        // The size of this buffer should greater equal than (bitSize + 4) >> 3, we don't sure what would happen if you don't have enough capacity.
+        SbBitBuffer(uint8_t* data, std::size_t bitSize);
         SbBitBuffer(const SbBitBuffer&) = default;
         SbBitBuffer(SbBitBuffer&&)      = default;
         SbBitBuffer& operator=(const SbBitBuffer&) = default;

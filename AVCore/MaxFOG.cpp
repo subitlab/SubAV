@@ -37,7 +37,7 @@ namespace SubIT {
         return treeEnd;
     }
 
-    size_t SbCodecMaxFOG::EncodeBytes(uint8_t* beg, uint8_t* end, std::ostream* stream) {
+    size_t SbCodecMaxFOG::EncodeBytes(uint8_t* beg, uint8_t* end, std::ostream* stream, uint8_t* buff) {
         // For future relocate.
         const std::streampos streambeg = stream->tellp();
 
@@ -62,7 +62,7 @@ namespace SubIT {
         }
 
         // Create output bitstream
-        SbBitBuffer  bitBuffer(65536); // This constant can be changed to whatever you like but this is for good performance.
+        SbBitBuffer  bitBuffer(buff, 65536);
         SbOBitStream bitStream(&bitBuffer, stream->rdbuf());
         // Write all bytes into bit stream according to the map.
         size_t     bitsEncoded = 0;
@@ -110,7 +110,7 @@ namespace SubIT {
         return bits;
     }
 
-    size_t SbCodecMaxFOG::DecodeBits(uint8_t* beg, size_t bits, std::istream* stream) {
+    size_t SbCodecMaxFOG::DecodeBits(uint8_t* beg, size_t bits, std::istream* stream, uint8_t* buf) {
 
         // Get tree and its range.
         uint8_t  treeBeg[256] = {};
@@ -119,17 +119,15 @@ namespace SubIT {
         stream->read(reinterpret_cast<char*>(treeBeg), static_cast<std::streamsize>(nodeCount));
 
         SbIKPByteDecoder bytDec(treeBeg, nodeCount);
-        char*         buf        = static_cast<char*>(::operator new((bits >> 3) + 1));
-        uint8_t*      curByte    = reinterpret_cast<uint8_t*>(buf);
-        const size_t  totalBytes = (bits >> 3) + ((bits & 0x7) ? 1 : 0);
-        stream->read(buf, totalBytes);
+        uint8_t*         curByte    = reinterpret_cast<uint8_t*>(buf);
+        const size_t     totalBytes = (bits >> 3) + ((bits & 0x7) ? 1 : 0);
+        stream->read(reinterpret_cast<char*>(buf), totalBytes);
         
         size_t bytesDecoded = 0;
-        for (uint8_t bitPos = 0x80; (curByte - reinterpret_cast<uint8_t*>(buf)) < totalBytes || (0x80 >> (bits & 0x7)) >= bitPos; ++beg, ++bytesDecoded) {
+        for(uint8_t bitPos = 0x80; (curByte - buf) < totalBytes || (0x80 >> (bits & 0x7)) >= bitPos; ++beg, ++bytesDecoded) {
             *beg = bytDec(&curByte, &bitPos);
         }
         
-        ::operator delete(buf);
         return bytesDecoded;
     }
 }
