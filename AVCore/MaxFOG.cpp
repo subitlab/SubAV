@@ -2,7 +2,7 @@
 /// \file      MaxFOG.cpp
 /// \brief     A MaxFOG codec implementation.
 /// \details   ~
-/// \author    HenryDu
+/// \author    HenryDu, Steve Wang
 /// \date      9.11.2024
 /// \copyright © HenryDu 2024. All right reserved.
 ///

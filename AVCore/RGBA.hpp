@@ -1,7 +1,7 @@
 ///
 /// \file      RGB.hpp
 /// \brief     YUV to RGB(A) convertor
-/// \author    Steve Wang, Henry Du
+/// \author    Steve Wang
 /// \date      1.22.2025
 /// \copyright © Steve Wang 2025
 ///

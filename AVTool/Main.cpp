@@ -32,18 +32,21 @@ Copyright © SubIT 2024. All right reserved.
 Part of SubAV SDK, a tool for ovc, dac, mmc generation.
 Following commands are available (You should at least have three arguments):
 
--ovg : Follows a image (JPEG, PNG, etc.)  and generate a ovc file.
--dag : Follows a audio (MP3, OGG etc.) and generate a dac file (WIP).
--mmg : Follows a video (MP4, MOV etc.) and generate a MMC file (WIP).
--ovv : Follows a ovc image -- view it.
--dav : Follows a dac audio -- listen to it (WIP).
--mmv : Follows a mmc video -- feel it (WIP).
+-ovg : Follows an image (JPEG, PNG, etc.)  and generate a ovc file.
+-dag : Follows an audio (MP3, OGG etc.) and generate a dac file (WIP).
+-mmg : Follows a  video (MP4, MOV etc.) and generate a MMC file (WIP).
+-ovv : Follows an ovc image -- view it.
+-dav : Follows a  dac audio -- listen to it (WIP).
+-mmv : Follows a  mmc video -- feel it (WIP).
 
 ========================================== Our Team ==========================================
 Leading developer: Henry Du     - Implemented Fast DCT + Quantization and this software.
-                                - Also designed all logos.
+                                - Portable Pixel Map io module.
+                                - Designed all logos.
 Core developer   : Steve Wang   - Implemented MaxFOG and IKP byte decoder.
-Contributors     : Jincheng Xu  - Managed out 4x4, 16x16 and 32x32 dct quantize matrices with AI.
+                                - YUV420P2RGB(A) module.
+Contributors     : Jincheng Xu  - Managed out 4x4, 16x16 and 32x32 dct quantize matrices (VarDCT).
+
 Add your name here as long as you have made contributions.
 Addition thanks to Xincheng Hao who inspired us to do this project and created all logos.
 ==============================================================================================
@@ -191,7 +194,7 @@ Addition thanks to Xincheng Hao who inspired us to do this project and created a
             if (command == "-ovg")    { MakeOVC(filename, tmp); return; }
             if (command == "-dag")    { MakeDAC(filename, tmp); return; }
             if (command == "-mmg")    { MakeMMC(filename, tmp); return; }
-            if (command == "-ovppm")  { MakePPM(filename, tmp); return; }
+            if (command == "-ovppm")  { MakePPM(filename, tmp); return; } // Hidden command, users don't know its existence.
             if (command == "-ovv")    { ViewOVC(filename, tmp); return; }
             if (command == "-dav")    { ViewDAC(filename, tmp); return; }
             if (command == "-mmv")    { ViewMMC(filename, tmp); return; }

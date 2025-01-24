@@ -2,7 +2,7 @@
 /// \file      MaxFOG.hpp
 /// \brief     MaxFOG coding implementation.
 /// \details   ~
-/// \author    HenryDu
+/// \author    HenryDu, Steve Wang
 /// \date      9.11.2024
 /// \copyright © HenryDu 2024. All right reserved.
 ///

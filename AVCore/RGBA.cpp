@@ -1,7 +1,7 @@
 ///
 /// \file      RGB.cpp
 /// \brief     YUV to RGB(A) convertor
-/// \author    Steve Wang, Henry Du
+/// \author    Steve Wang
 /// \date      1.22.2025
 /// \copyright © Steve Wang 2025.
 ///
@@ -48,12 +48,6 @@ namespace SubIT {
             }
             dest += img->width*4;
         }
-        /*for (int i = 0; i < img->height; ++i) {
-            for (int j = 0; j < img->width; ++j) {
-                SbSIMD::yuv2rgba(img->entity[i * img->width + j], img->entity[u_offset + (i >> 1) * (img->width>>1) + (j >> 1)], img->entity[v_offset + (i >> 1) * (img->width>>1) + (j >> 1)], dest);
-                dest += 4;
-            }
-        }*/
     }
 
     void SbRGB::operator()(uint8_t* dest) {
@@ -109,14 +103,5 @@ namespace SubIT {
             }
             dest += img->width*3;
         }
-        /*
-        for (int i = 0; i < img->height; ++i) {
-            for (int j = 0; j < img->width; ++j) {
-                SbSIMD::yuv2rgba(img->entity[i * img->width + j], img->entity[u_offset + (i >> 1) * (img->width>>1) + (j >> 1)], img->entity[v_offset + (i >> 1) * (img->width>>1) + (j >> 1)], rgba);
-                std::memcpy(dest, rgba, 3);
-                dest += 3;
-            }
-        }*/
-
     }
 }
