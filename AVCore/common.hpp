@@ -18,3 +18,4 @@
 #include <cstring> // for memcpy.
 #include <utility> // for std::exchange
 #include <future> // for std::async.
+#include <functional>
