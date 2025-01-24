@@ -12,7 +12,6 @@
 #include "MaxFOG.hpp"
 #include "DCT.hpp"
 #include "SIMD.hpp"
-#include "BitStream.hpp"
 
 namespace SubIT {
 
