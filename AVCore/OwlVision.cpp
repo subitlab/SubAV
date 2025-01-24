@@ -13,7 +13,9 @@
 #include <ostream>
 #include <iostream> // for quantization debug output.
 #include <future> // for std::async.
+#include <functional>
 
+#include "common.hpp"
 #include "OwlVision.hpp"
 #include "MaxFOG.hpp"
 #include "DCT.hpp"

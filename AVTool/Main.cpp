@@ -11,6 +11,7 @@
 #include <iostream>
 #include <filesystem>
 #include <thread>
+#include "../AVCore/common.hpp"
 
 #include "../AVCore/RGBA.hpp"
 #include "../AVCore/OwlVision.hpp"
