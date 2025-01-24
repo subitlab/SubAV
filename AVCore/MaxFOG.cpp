@@ -11,7 +11,6 @@
 #include <ostream>
 #include <istream>
 
-#include "BitStream.hpp"
 #include "MaxFOG.hpp"
 #include "IKP.hpp"
 
@@ -61,47 +60,53 @@ namespace SubIT {
             acMap[treeBeg[i]] = i;
         }
 
-        // Create output bitstream
-        SbBitBuffer  bitBuffer(buff, 65536);
-        SbOBitStream bitStream(&bitBuffer, stream->rdbuf());
+        uint8_t obuf = 0, bufPos = 0x80;
+#define PUT_BIT(x) if(x) obuf |= bufPos;\
+            bufPos >>= 1;\
+            if(!bufPos) {\
+                stream->rdbuf()->sputc(static_cast<char>(obuf));\
+                obuf = 0, bufPos = 0x80;\
+            }
         // Write all bytes into bit stream according to the map.
         size_t     bitsEncoded = 0;
         for(; beg != end; ++beg) {
             if(*beg == '\0') { // 0 is treated differently because of the nature of DCT'ed data, especially after quantization.
-                bitStream.BitPut(0);
+                PUT_BIT(0)
                 ++bitsEncoded;
                 continue;
             }
-            bitStream.BitPut(1); // Golomb coding
+            PUT_BIT(1); // Golomb coding
             ++bitsEncoded;
             auto treePos = treeBeg;
             for(; treeEnd - treePos > 2; treePos += 2) {
                 if(*treePos == *beg) { // No.0 in current chunk
-                    bitStream.BitPut(0);
-                    bitStream.BitPut(0);
+                    PUT_BIT(0)
+                    PUT_BIT(0)
                     bitsEncoded += 2;
                     break;
                 }
                 if(*(treePos+1) == *beg) { // No.1 in current chunk
-                    bitStream.BitPut(0);
-                    bitStream.BitPut(1);
+                    PUT_BIT(0)
+                    PUT_BIT(1)
                     bitsEncoded += 2;
                     break;
                 }
-                bitStream.BitPut(1); // Otherwise, go to the next chunk
+                PUT_BIT(1)  // Otherwise, go to the next chunk
                 ++bitsEncoded;
             }
             if(treePos == treeEnd - 2) { // The last mark is only needed if there are two values in the last chunk
-                bitStream.BitPut(!(*treePos == *beg));
+                PUT_BIT(!(*treePos == *beg));
                 ++bitsEncoded;
             }
         }
-        // Push remaining data.
-        bitStream.Push();
+        // Put remaining data (if exists).
+        if(bufPos != 0x80) stream->rdbuf()->sputc(obuf);
         // Back to start position to write how many bits encoded.
         stream->seekp(streambeg);
         stream->write(reinterpret_cast<const char*>(&bitsEncoded), sizeof(size_t));
+        stream->flush();
         return bitsEncoded;
+#undef PUT_BIT
     }
 
     size_t SbCodecMaxFOG::GetEncodedBits(std::istream* stream) {
