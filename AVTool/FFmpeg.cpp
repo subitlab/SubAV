@@ -42,7 +42,7 @@ namespace SubIT {
     }
 
     uint32_t SbFFMpegCommander::YUVCreateStream(std::string_view filename, std::string_view out) {
-        std::string fmt = std::format("ffmpeg -v quiet -i {0:s} -pix_fmt yuv420p -vf vflip {1:s}.yuv", filename, out);
+        std::string fmt = std::format("ffmpeg -v quiet -i {0:s} -pix_fmt yuv420p {1:s}.yuv", filename, out);
         return std::system(fmt.c_str());
     }
 
@@ -53,6 +53,6 @@ namespace SubIT {
     }
 
     uint32_t SbFFMpegCommander::OwlVisionDisplay(SbOwlVisionCoreImage* image, std::string_view tmpName) {
-        return std::system(std::format("ffplay -v quiet -f rawvideo -pixel_format yuv420p -vf vflip -video_size {:d}x{:d} {:s}", image->width, image->height, tmpName).c_str());
+        return std::system(std::format("ffplay -v quiet -f rawvideo -pixel_format yuv420p -video_size {:d}x{:d} {:s}", image->width, image->height, tmpName).c_str());
     }
 }
